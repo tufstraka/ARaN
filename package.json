@@ -1,0 +1,28 @@
+{
+  "name": "flip-world",
+  "version": "1.0.0",
+  "description": "A colorful puzzle-platformer where pressing ONE BUTTON flips the entire world upside-down",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "phaser",
+    "game",
+    "puzzle",
+    "platformer",
+    "gamedevjs",
+    "jam"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "phaser": "^3.80.0"
+  }
+}
