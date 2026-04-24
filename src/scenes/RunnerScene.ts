@@ -48,6 +48,13 @@ export class RunnerScene extends Phaser.Scene {
   // Floor/ceiling
   private floor!: Phaser.Physics.Arcade.StaticGroup;
   private ceiling!: Phaser.Physics.Arcade.StaticGroup;
+  
+  // Upgrade values (cached)
+  private magnetRange: number = 0;
+  private timeDilationAmount: number = 0;
+  private comboDecayMult: number = 1;
+  private pointsMult: number = 1;
+  private isNearObstacle: boolean = false;
 
   constructor() {
     super({ key: 'RunnerScene' });
@@ -120,9 +127,34 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   private applyUpgrades(): void {
-    // Shield upgrade
+    // Shield upgrade - start with shields
     const shieldLevel = progression.getUpgradeLevel('shield');
     this.shields = UPGRADES.find(u => u.id === 'shield')?.effect(shieldLevel) || 0;
+    
+    // Magnet upgrade - attract gears from distance
+    const magnetLevel = progression.getUpgradeLevel('magnet');
+    this.magnetRange = UPGRADES.find(u => u.id === 'magnet')?.effect(magnetLevel) || 0;
+    
+    // Time dilation - slow time near obstacles
+    const timeDilationLevel = progression.getUpgradeLevel('timeDilation');
+    this.timeDilationAmount = UPGRADES.find(u => u.id === 'timeDilation')?.effect(timeDilationLevel) || 0;
+    
+    // Combo extend - combos last longer
+    const comboExtendLevel = progression.getUpgradeLevel('comboExtend');
+    this.comboDecayMult = 1 + (UPGRADES.find(u => u.id === 'comboExtend')?.effect(comboExtendLevel) || 0) / 100;
+    
+    // Double points - score multiplier
+    const doublePointsLevel = progression.getUpgradeLevel('doublePoints');
+    this.pointsMult = 1 + (UPGRADES.find(u => u.id === 'doublePoints')?.effect(doublePointsLevel) || 0) / 100;
+    
+    // Debug log
+    console.log('Upgrades applied:', {
+      shields: this.shields,
+      magnetRange: this.magnetRange,
+      timeDilation: this.timeDilationAmount + '%',
+      comboDecay: this.comboDecayMult + 'x',
+      pointsMult: this.pointsMult + 'x'
+    });
   }
 
   private createBackground(): void {
@@ -436,7 +468,7 @@ export class RunnerScene extends Phaser.Scene {
     // Update combo
     const now = Date.now();
     const comboExtend = progression.getUpgradeLevel('comboExtend');
-    const comboDecay = CONFIG.COMBO_DECAY_TIME * (1 + (UPGRADES.find(u => u.id === 'comboExtend')?.effect(comboExtend) || 0) / 100);
+    const comboDecay = CONFIG.COMBO_DECAY_TIME * this.comboDecayMult;
     
     if (now - this.lastGearTime < comboDecay) {
       this.combo = Math.min(this.combo + 1, CONFIG.COMBO_MULTIPLIER_MAX);
@@ -446,10 +478,8 @@ export class RunnerScene extends Phaser.Scene {
     this.lastGearTime = now;
     this.maxCombo = Math.max(this.maxCombo, this.combo);
     
-    // Add score with combo
-    const doublePoints = progression.getUpgradeLevel('doublePoints');
-    const pointsMult = 1 + (UPGRADES.find(u => u.id === 'doublePoints')?.effect(doublePoints) || 0) / 100;
-    const points = Math.floor(CONFIG.POINTS_PER_GEAR * this.combo * pointsMult);
+    // Add score with combo (using cached pointsMult)
+    const points = Math.floor(CONFIG.POINTS_PER_GEAR * this.combo * this.pointsMult);
     this.score += points;
     this.gears++;
     
@@ -534,20 +564,59 @@ export class RunnerScene extends Phaser.Scene {
     // Update run time
     this.runTime += delta / 1000;
     
+    // Check if near obstacle for time dilation
+    this.isNearObstacle = this.obstacleGenerator.isObstacleNearPlayer(this.bot.x, this.bot.y, 150);
+    
+    // Apply time dilation if near obstacle and have upgrade
+    let effectiveDelta = delta;
+    if (this.isNearObstacle && this.timeDilationAmount > 0) {
+      effectiveDelta = delta * (1 - this.timeDilationAmount / 100);
+      // Visual feedback - slight tint
+      this.bot.setTint(0x8888FF);
+    } else {
+      this.bot.clearTint();
+    }
+    
     // Update scroll speed (gradually increases)
     const speedMult = this.obstacleGenerator.getScrollSpeedMultiplier();
-    this.scrollSpeed = Math.min(
-      CONFIG.BASE_SCROLL_SPEED * speedMult + (this.runTime * CONFIG.SPEED_INCREASE_RATE),
-      CONFIG.MAX_SCROLL_SPEED
-    );
+    const baseSpeed = CONFIG.BASE_SCROLL_SPEED * speedMult + (this.runTime * CONFIG.SPEED_INCREASE_RATE);
+    // Apply time dilation to scroll speed
+    const dilatedSpeed = this.isNearObstacle && this.timeDilationAmount > 0 
+      ? baseSpeed * (1 - this.timeDilationAmount / 100)
+      : baseSpeed;
+    this.scrollSpeed = Math.min(dilatedSpeed, CONFIG.MAX_SCROLL_SPEED);
     
     // Update obstacle generator
-    this.obstacleGenerator.update(delta, this.scrollSpeed);
+    this.obstacleGenerator.update(effectiveDelta, this.scrollSpeed);
     
-    // Update gear velocities
+    // Update gear velocities + MAGNET ATTRACTION
     this.gearsGroup.getChildren().forEach(child => {
       const gear = child as Phaser.Physics.Arcade.Sprite;
-      gear.setVelocityX(-this.scrollSpeed);
+      
+      // Base movement
+      let vx = -this.scrollSpeed;
+      let vy = 0;
+      
+      // Magnet attraction
+      if (this.magnetRange > 0) {
+        const dx = this.bot.x - gear.x;
+        const dy = this.bot.y - gear.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist < this.magnetRange && dist > 10) {
+          // Attract towards player
+          const strength = (1 - dist / this.magnetRange) * 400; // Stronger when closer
+          vx += (dx / dist) * strength;
+          vy += (dy / dist) * strength;
+          
+          // Visual feedback - gear glows when attracted
+          gear.setTint(0x00FFFF);
+        } else {
+          gear.clearTint();
+        }
+      }
+      
+      gear.setVelocity(vx, vy);
       
       // Cleanup off-screen gears
       if (gear.x < -50) {
@@ -566,13 +635,12 @@ export class RunnerScene extends Phaser.Scene {
       this.shieldVisual.setPosition(this.bot.x, this.bot.y);
     }
     
-    // Update score from time
-    const doublePoints = progression.getUpgradeLevel('doublePoints');
-    const pointsMult = 1 + (UPGRADES.find(u => u.id === 'doublePoints')?.effect(doublePoints) || 0) / 100;
-    this.score += Math.floor(CONFIG.POINTS_PER_SECOND * (delta / 1000) * pointsMult);
+    // Update score from time (using cached pointsMult)
+    this.score += Math.floor(CONFIG.POINTS_PER_SECOND * (delta / 1000) * this.pointsMult);
     
-    // Check combo decay
-    if (Date.now() - this.lastGearTime > CONFIG.COMBO_DECAY_TIME && this.combo > 1) {
+    // Check combo decay (using cached comboDecayMult)
+    const comboDecay = CONFIG.COMBO_DECAY_TIME * this.comboDecayMult;
+    if (Date.now() - this.lastGearTime > comboDecay && this.combo > 1) {
       this.combo = 1;
     }
     

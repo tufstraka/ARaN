@@ -345,4 +345,21 @@ export class ObstacleGenerator {
   getScrollSpeedMultiplier(): number {
     return this.currentPhase.scrollSpeedMult;
   }
+  
+  /**
+   * Check if any obstacle is near the player (for time dilation)
+   */
+  isObstacleNearPlayer(playerX: number, playerY: number, range: number): boolean {
+    for (const obstacle of this.obstacles) {
+      if (obstacle.hitbox) {
+        const dx = obstacle.hitbox.x - playerX;
+        const dy = obstacle.hitbox.y - playerY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < range) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
