@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { CONFIG, COLORS, DIFFICULTY_PHASES, PATTERNS, ObstacleType } from '../config/gameConfig';
+import { soundManager } from '../utils/SoundManager';
 
 interface Obstacle {
   sprite: Phaser.GameObjects.GameObject;
@@ -65,6 +66,9 @@ export class ObstacleGenerator {
   }
   
   private onPhaseChange(phase: typeof DIFFICULTY_PHASES[0]): void {
+    // Play warning sound
+    soundManager.playPhaseChange();
+    
     // Show phase name
     const { width, height } = this.scene.cameras.main;
     const text = this.scene.add.text(width / 2, height / 3, phase.name, {

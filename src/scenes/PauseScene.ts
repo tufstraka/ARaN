@@ -237,7 +237,7 @@ export class PauseScene extends Phaser.Scene {
 
   private resumeGame(): void {
     // Play resume sound
-    soundManager.playResume();
+    soundManager.playClick();
     
     // Elegant fade out
     this.cameras.main.fadeOut(200, 0, 0, 0);
