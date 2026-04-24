@@ -16,6 +16,7 @@ export class UpgradeScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.cameras.main;
+    const isCompact = height < 580;
     
     // Background
     const bg = this.add.graphics();
@@ -23,8 +24,8 @@ export class UpgradeScene extends Phaser.Scene {
     bg.fillRect(0, 0, width, height);
     
     // Title
-    this.add.text(width / 2, 40, '⚡ UPGRADES ⚡', {
-      fontSize: '32px',
+    this.add.text(width / 2, isCompact ? 20 : 40, '⚡ UPGRADES ⚡', {
+      fontSize: isCompact ? '24px' : '32px',
       color: '#00FFFF',
       fontFamily: 'monospace',
       stroke: '#000',
@@ -32,24 +33,25 @@ export class UpgradeScene extends Phaser.Scene {
     }).setOrigin(0.5);
     
     // Currency display (prominent)
+    const currencyY = isCompact ? 45 : 70;
     const currencyBg = this.add.graphics();
     currencyBg.fillStyle(0x1a1a2e, 0.8);
-    currencyBg.fillRoundedRect(width / 2 - 80, 70, 160, 40, 8);
+    currencyBg.fillRoundedRect(width / 2 - 70, currencyY, 140, 32, 6);
     currencyBg.lineStyle(2, 0xFFD700, 0.5);
-    currencyBg.strokeRoundedRect(width / 2 - 80, 70, 160, 40, 8);
+    currencyBg.strokeRoundedRect(width / 2 - 70, currencyY, 140, 32, 6);
     
-    const currencyText = this.add.text(width / 2, 90, `⚙️ ${progression.currency}`, {
-      fontSize: '24px',
+    const currencyText = this.add.text(width / 2, currencyY + 16, `⚙️ ${progression.currency}`, {
+      fontSize: isCompact ? '18px' : '24px',
       color: '#FFD700',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
     
-    // Upgrade cards - calculate layout
-    const startY = 130;
-    const cardHeight = 75;
-    const cardSpacing = 8;
+    // Upgrade cards - calculate compact layout
+    const startY = isCompact ? 85 : 130;
+    const cardHeight = isCompact ? 55 : 75;
+    const cardSpacing = isCompact ? 4 : 8;
     const totalCardsHeight = UPGRADES.length * (cardHeight + cardSpacing);
-    const buttonsY = startY + totalCardsHeight + 15;
+    const buttonsY = Math.min(startY + totalCardsHeight + 10, height - 55);
     
     // Create upgrade cards
     UPGRADES.forEach((upgrade, index) => {
@@ -58,14 +60,15 @@ export class UpgradeScene extends Phaser.Scene {
         startY + index * (cardHeight + cardSpacing),
         upgrade,
         currencyText,
-        cardHeight
+        cardHeight,
+        isCompact
       );
     });
     
     // === BOTTOM BUTTONS ===
-    const buttonWidth = 140;
-    const buttonHeight = 45;
-    const buttonGap = 20;
+    const buttonWidth = isCompact ? 110 : 140;
+    const buttonHeight = isCompact ? 36 : 45;
+    const buttonGap = isCompact ? 15 : 20;
     
     // PLAY button (primary)
     this.createButton(
@@ -110,10 +113,11 @@ export class UpgradeScene extends Phaser.Scene {
     y: number, 
     upgrade: typeof UPGRADES[0],
     currencyText: Phaser.GameObjects.Text,
-    cardHeight: number
+    cardHeight: number,
+    isCompact: boolean = false
   ): void {
     const { width } = this.cameras.main;
-    const cardWidth = Math.min(480, width - 40);
+    const cardWidth = Math.min(isCompact ? 420 : 480, width - 30);
     
     const currentLevel = progression.getUpgradeLevel(upgrade.id);
     const isMaxed = currentLevel >= upgrade.maxLevel;
@@ -125,53 +129,60 @@ export class UpgradeScene extends Phaser.Scene {
     const card = this.add.graphics();
     const bgColor = isMaxed ? 0x1a3a1a : 0x1a1a2e;
     card.fillStyle(bgColor, 0.9);
-    card.fillRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 8);
+    card.fillRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 6);
     
     const borderColor = isMaxed ? 0x39FF14 : (canAfford ? COLORS.NEON_CYAN : 0x333333);
     card.lineStyle(2, borderColor, 0.6);
-    card.strokeRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 8);
+    card.strokeRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 6);
     
     // Icon
-    this.add.text(x - cardWidth / 2 + 25, y + cardHeight / 2, upgrade.icon, {
-      fontSize: '28px'
+    const iconSize = isCompact ? '20px' : '28px';
+    this.add.text(x - cardWidth / 2 + 20, y + cardHeight / 2, upgrade.icon, {
+      fontSize: iconSize
     }).setOrigin(0.5);
     
     // Name + Level
     const levelStr = isMaxed ? ' (MAX)' : ` Lv.${currentLevel}`;
-    this.add.text(x - cardWidth / 2 + 55, y + 12, upgrade.name + levelStr, {
-      fontSize: '15px',
+    const nameSize = isCompact ? '12px' : '15px';
+    this.add.text(x - cardWidth / 2 + 42, y + (isCompact ? 8 : 12), upgrade.name + levelStr, {
+      fontSize: nameSize,
       color: isMaxed ? '#39FF14' : '#FFFFFF',
       fontFamily: 'monospace'
     });
     
-    // Description with current effect
+    // Description with current effect (hide on compact if needed)
     const effectValue = upgrade.effect(currentLevel);
     let descText = upgrade.description.replace('{n}', effectValue.toString());
     
-    this.add.text(x - cardWidth / 2 + 55, y + 32, descText, {
-      fontSize: '11px',
-      color: '#888',
-      fontFamily: 'monospace'
-    });
+    if (!isCompact) {
+      this.add.text(x - cardWidth / 2 + 42, y + 32, descText, {
+        fontSize: '11px',
+        color: '#888',
+        fontFamily: 'monospace'
+      });
+    }
     
     // Level pips
-    const pipsStartX = x - cardWidth / 2 + 55;
+    const pipsStartX = x - cardWidth / 2 + 42;
+    const pipY = isCompact ? y + 28 : y + 55;
+    const pipSize = isCompact ? 10 : 12;
+    const pipSpacing = isCompact ? 14 : 18;
     for (let i = 0; i < upgrade.maxLevel; i++) {
       const pipColor = i < currentLevel ? 0x39FF14 : 0x333333;
-      this.add.rectangle(pipsStartX + i * 18, y + 55, 12, 8, pipColor).setOrigin(0, 0.5);
+      this.add.rectangle(pipsStartX + i * pipSpacing, pipY, pipSize, 6, pipColor).setOrigin(0, 0.5);
     }
     
     // Buy button or MAX badge
     if (isMaxed) {
-      this.add.text(x + cardWidth / 2 - 50, y + cardHeight / 2, '✓ MAX', {
-        fontSize: '14px',
+      this.add.text(x + cardWidth / 2 - 40, y + cardHeight / 2, '✓ MAX', {
+        fontSize: isCompact ? '11px' : '14px',
         color: '#39FF14',
         fontFamily: 'monospace'
       }).setOrigin(0.5);
     } else {
-      const btnWidth = 70;
-      const btnHeight = 32;
-      const btnX = x + cardWidth / 2 - 55;
+      const btnWidth = isCompact ? 55 : 70;
+      const btnHeight = isCompact ? 26 : 32;
+      const btnX = x + cardWidth / 2 - (isCompact ? 40 : 55);
       const btnY = y + cardHeight / 2;
       
       const btn = this.add.graphics();
