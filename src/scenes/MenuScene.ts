@@ -28,6 +28,12 @@ export class MenuScene extends Phaser.Scene {
     
     // Fade in
     this.cameras.main.fadeIn(500);
+    
+    // YouTube Playables: Signal game is ready for interaction
+    if ((window as any).isYouTubePlayables && (window as any).ytgame) {
+      (window as any).ytgame.game.gameReady();
+      console.log('YouTube Playables: gameReady called from MenuScene');
+    }
   }
 
   private createBackground(): void {

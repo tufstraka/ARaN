@@ -24,6 +24,13 @@ export class GameOverScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.cameras.main;
     
+    // Send score to YouTube Playables
+    if ((window as any).isYouTubePlayables && (window as any).ytgame) {
+      (window as any).ytgame.engagement.sendScore({ value: Math.floor(this.runData.score) })
+        .then(() => console.log('YouTube Playables: score sent', this.runData.score))
+        .catch((e: any) => console.error('Failed to send score', e));
+    }
+    
     // Dark overlay
     const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.8);
     overlay.setOrigin(0);
