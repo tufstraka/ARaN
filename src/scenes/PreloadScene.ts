@@ -203,5 +203,50 @@ export class PreloadScene extends Phaser.Scene {
     particleGraphics.fillCircle(4, 4, 2);
     particleGraphics.generateTexture('particle', 8, 8);
     particleGraphics.destroy();
+
+    // Create CONVEYOR BELT texture
+    const conveyorGraphics = this.make.graphics({ x: 0, y: 0 });
+    conveyorGraphics.fillStyle(0x7D6608); // Bronze conveyor
+    conveyorGraphics.fillRect(0, 0, 32, 32);
+    // Belt ridges
+    conveyorGraphics.fillStyle(0x5D4E06);
+    for (let i = 0; i < 4; i++) {
+      conveyorGraphics.fillRect(i * 8 + 2, 8, 4, 16);
+    }
+    // Metal edges
+    conveyorGraphics.fillStyle(0x5D6D7E);
+    conveyorGraphics.fillRect(0, 0, 32, 4);
+    conveyorGraphics.fillRect(0, 28, 32, 4);
+    conveyorGraphics.generateTexture('conveyor', 32, 32);
+    conveyorGraphics.destroy();
+
+    // Create PISTON texture
+    const pistonGraphics = this.make.graphics({ x: 0, y: 0 });
+    // Piston head (danger!)
+    pistonGraphics.fillStyle(0x8B0000); // Dark red
+    pistonGraphics.fillRect(4, 4, 24, 24);
+    // Warning stripes
+    pistonGraphics.fillStyle(0xF1C40F);
+    pistonGraphics.fillRect(4, 8, 24, 4);
+    pistonGraphics.fillRect(4, 20, 24, 4);
+    // Metal border
+    pistonGraphics.lineStyle(2, 0x5D6D7E);
+    pistonGraphics.strokeRect(4, 4, 24, 24);
+    pistonGraphics.generateTexture('piston', 32, 32);
+    pistonGraphics.destroy();
+
+    // Create POWERUP texture (generic, will be tinted)
+    const powerupGraphics = this.make.graphics({ x: 0, y: 0 });
+    // Glowing orb
+    powerupGraphics.fillStyle(0xFFFFFF, 0.8);
+    powerupGraphics.fillCircle(12, 12, 10);
+    // Inner glow
+    powerupGraphics.fillStyle(0xFFFFFF);
+    powerupGraphics.fillCircle(12, 12, 6);
+    // Shine
+    powerupGraphics.fillStyle(0xFFFFFF);
+    powerupGraphics.fillCircle(8, 8, 2);
+    powerupGraphics.generateTexture('powerup', 24, 24);
+    powerupGraphics.destroy();
   }
 }

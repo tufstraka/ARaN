@@ -1,16 +1,31 @@
 import Phaser from 'phaser';
 import { LEVELS, LevelData } from '../config/constants';
 import { soundManager } from '../utils/SoundManager';
-import { PhysicsSystem, InputSystem, ParticleSystem, ScoreSystem } from '../systems';
+import { 
+  PhysicsSystem, 
+  InputSystem, 
+  ParticleSystem, 
+  ScoreSystem,
+  ConveyorSystem,
+  PistonSystem,
+  LaserSystem,
+  PowerupSystem
+} from '../systems';
 import { LevelManager, BackgroundManager } from '../managers';
 import { Player } from '../entities';
 
 export class GameScene extends Phaser.Scene {
-  // Systems
+  // Core Systems
   private physicsSystem!: PhysicsSystem;
   private inputSystem!: InputSystem;
   private particleSystem!: ParticleSystem;
   private scoreSystem!: ScoreSystem;
+
+  // Mechanic Systems
+  private conveyorSystem!: ConveyorSystem;
+  private pistonSystem!: PistonSystem;
+  private laserSystem!: LaserSystem;
+  private powerupSystem!: PowerupSystem;
 
   // Managers
   private levelManager!: LevelManager;
@@ -35,11 +50,17 @@ export class GameScene extends Phaser.Scene {
     // Get level data
     this.levelData = LEVELS[this.currentLevel - 1] || LEVELS[0];
 
-    // Initialize systems
+    // Initialize core systems
     this.physicsSystem = new PhysicsSystem(this);
     this.inputSystem = new InputSystem(this);
     this.particleSystem = new ParticleSystem(this);
     this.scoreSystem = new ScoreSystem(this);
+
+    // Initialize mechanic systems
+    this.conveyorSystem = new ConveyorSystem(this);
+    this.pistonSystem = new PistonSystem(this);
+    this.laserSystem = new LaserSystem(this);
+    this.powerupSystem = new PowerupSystem(this);
 
     // Initialize managers
     this.backgroundManager = new BackgroundManager(this);
@@ -48,7 +69,16 @@ export class GameScene extends Phaser.Scene {
     // Create everything
     this.backgroundManager.create();
     this.levelManager.create();
+    
+    // Create mechanic objects
+    this.conveyorSystem.create(this.levelData);
+    this.pistonSystem.create(this.levelData);
+    this.laserSystem.create(this.levelData);
+    this.powerupSystem.create(this.levelData);
+    
+    // Create player last (on top)
     this.player = new Player(this, this.levelData);
+    
     this.particleSystem.create();
     this.scoreSystem.createUI(this.currentLevel);
 
@@ -65,13 +95,16 @@ export class GameScene extends Phaser.Scene {
     // Camera fade in
     this.cameras.main.fadeIn(500);
 
-    // Show level name
+    // Show level name and tutorial
     this.showLevelName();
   }
 
   private setupCollisions(): void {
     // Player collides with platforms
     this.physics.add.collider(this.player.sprite, this.levelManager.platforms);
+
+    // Player collides with conveyors (for standing on)
+    this.physics.add.collider(this.player.sprite, this.conveyorSystem.conveyors);
 
     // Player collects coins
     this.physics.add.overlap(
@@ -86,7 +119,34 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(
       this.player.sprite,
       this.levelManager.spikes,
-      this.hitSpike,
+      this.hitHazard,
+      undefined,
+      this
+    );
+
+    // Player hits pistons
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.pistonSystem.getGroup(),
+      this.hitHazard,
+      undefined,
+      this
+    );
+
+    // Player hits lasers
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.laserSystem.getGroup(),
+      this.hitHazard,
+      undefined,
+      this
+    );
+
+    // Player collects powerups
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.powerupSystem.getGroup(),
+      this.collectPowerup,
       undefined,
       this
     );
@@ -104,11 +164,17 @@ export class GameScene extends Phaser.Scene {
   update(): void {
     if (!this.player) return;
 
-    // Update player
+    // Update player with speed multiplier from powerups
+    const speedMult = this.powerupSystem.getSpeedMultiplier();
     this.player.update(
       this.physicsSystem.isFlipped,
-      this.physicsSystem.isFlipping
+      this.physicsSystem.isFlipping,
+      speedMult
     );
+
+    // Update systems
+    this.conveyorSystem.update(this.player.sprite);
+    this.powerupSystem.update();
 
     // Update UI
     this.scoreSystem.updateFlipIndicator(this.physicsSystem.isFlipped);
@@ -144,7 +210,24 @@ export class GameScene extends Phaser.Scene {
     coinSprite.destroy();
   }
 
-  private hitSpike(): void {
+  private collectPowerup(
+    _player: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody | Phaser.Tilemaps.Tile,
+    powerup: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody | Phaser.Tilemaps.Tile
+  ): void {
+    const powerupSprite = powerup as Phaser.Physics.Arcade.Sprite;
+    soundManager.playCoinCollect(); // Reuse sound for now
+    this.powerupSystem.collect(powerupSprite, this.player.sprite);
+  }
+
+  private hitHazard(): void {
+    // Check if shield absorbs the hit
+    if (this.powerupSystem.useShield()) {
+      // Shield absorbed it - flash blue instead
+      this.cameras.main.flash(200, 0, 100, 255);
+      soundManager.playFlip(); // Reuse sound
+      return;
+    }
+
     soundManager.playDeath();
     this.particleSystem.emitDeath(this.player.x, this.player.y);
     this.cameras.main.flash(200, 255, 0, 0);
@@ -203,6 +286,31 @@ export class GameScene extends Phaser.Scene {
       yoyo: true,
       hold: 1000,
       onComplete: () => levelName.destroy()
+    });
+
+    // Show tutorial if present
+    if (this.levelData.tutorial) {
+      this.showTutorial(this.levelData.tutorial);
+    }
+  }
+
+  private showTutorial(text: string): void {
+    const { width } = this.cameras.main;
+
+    const tutorial = this.add.text(width / 2, 100, text, {
+      fontSize: '20px',
+      color: '#FFE66D',
+      fontFamily: 'Arial',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+
+    this.tweens.add({
+      targets: tutorial,
+      alpha: 0,
+      delay: 4000,
+      duration: 1000,
+      onComplete: () => tutorial.destroy()
     });
   }
 

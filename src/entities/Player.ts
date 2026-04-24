@@ -42,14 +42,14 @@ export class Player {
   /**
    * Update player each frame
    */
-  update(isFlipped: boolean, isFlipping: boolean): void {
+  update(isFlipped: boolean, isFlipping: boolean, speedMultiplier: number = 1): void {
     if (!this.sprite || !this.sprite.body) return;
 
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
 
     // Auto-walk: PIP always moves right
     if (!isFlipping) {
-      body.setVelocityX(GAME_CONFIG.PIP_SPEED);
+      body.setVelocityX(GAME_CONFIG.PIP_SPEED * speedMultiplier);
     }
 
     // Flip sprite based on gravity direction
