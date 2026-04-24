@@ -142,16 +142,6 @@ export class MenuScene extends Phaser.Scene {
       fontFamily: 'monospace',
       letterSpacing: isMobile ? 3 : 6
     }).setOrigin(0.5);
-    
-    // Theme badge - hide on very small screens
-    if (!isMobile || height > 450) {
-      const badgeY = isMobile ? 170 : 235;
-      this.add.text(width / 2, badgeY, '⚙️ GAMEDEV.JS JAM 2026 • MACHINES ⚙️', {
-        fontSize: isMobile ? '8px' : '10px',
-        color: '#555',
-        fontFamily: 'monospace'
-      }).setOrigin(0.5);
-    }
   }
 
   private createStatsDisplay(): void {
@@ -418,15 +408,9 @@ export class MenuScene extends Phaser.Scene {
   private createFooter(): void {
     const { width, height } = this.cameras.main;
     
-    this.add.text(width / 2, height - 30, 'Gamedev.js Jam 2026 • Theme: MACHINES', {
-      fontSize: '11px',
-      color: '#333',
-      fontFamily: 'monospace'
-    }).setOrigin(0.5);
-    
-    this.add.text(width / 2, height - 15, 'Made by tufstraka', {
+    this.add.text(width / 2, height - 20, 'Made by tufstraka', {
       fontSize: '10px',
-      color: '#222',
+      color: '#333',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
   }
