@@ -112,47 +112,93 @@ export interface ObstaclePattern {
 
 // === PREDEFINED PATTERNS (hand-crafted challenges) ===
 export const PATTERNS: { [key: string]: ObstaclePattern[] } = {
-  // Easy patterns (early game)
+  // === EASY (0-30s) ===
   easy_floor_spikes: [
-    { type: 'spike_floor', width: 3 },
+    { type: 'spike_floor', width: 2 },
   ],
   easy_ceiling_spikes: [
-    { type: 'spike_ceiling', width: 3 },
+    { type: 'spike_ceiling', width: 2 },
+  ],
+  easy_short_floor: [
+    { type: 'spike_floor', width: 1 },
+  ],
+  easy_short_ceiling: [
+    { type: 'spike_ceiling', width: 1 },
   ],
   easy_alternating: [
     { type: 'spike_floor', width: 2 },
-    { type: 'spike_ceiling', width: 2, delay: 0.5 },
+    { type: 'spike_ceiling', width: 2, delay: 0.6 },
+  ],
+  easy_gap_small: [
+    { type: 'gap', width: 2 },
   ],
   
-  // Medium patterns
-  medium_crusher: [
-    { type: 'crusher', y: 0 },
-    { type: 'spike_floor', width: 2, delay: 0.3 },
+  // === MEDIUM (30-60s) ===
+  medium_long_floor: [
+    { type: 'spike_floor', width: 4 },
   ],
-  medium_laser: [
-    { type: 'laser_horizontal', y: 0.5 },
+  medium_long_ceiling: [
+    { type: 'spike_ceiling', width: 4 },
+  ],
+  medium_crusher_floor: [
+    { type: 'crusher', y: 0 },
+  ],
+  medium_crusher_ceiling: [
+    { type: 'crusher', y: 1 },
   ],
   medium_gap: [
-    { type: 'gap', width: 4 },
+    { type: 'gap', width: 3 },
+  ],
+  medium_zigzag: [
+    { type: 'spike_floor', width: 2 },
+    { type: 'spike_ceiling', width: 2, delay: 0.4 },
+    { type: 'spike_floor', width: 2, delay: 0.8 },
+  ],
+  medium_laser_mid: [
+    { type: 'laser_horizontal', y: 0.5 },
   ],
   
-  // Hard patterns
+  // === HARD (60-90s) ===
   hard_double_crusher: [
     { type: 'crusher', y: 0 },
-    { type: 'crusher', y: 1, delay: 0.5 },
+    { type: 'crusher', y: 1, delay: 0.4 },
   ],
-  hard_laser_sweep: [
-    { type: 'laser_sweep' },
+  hard_laser_low: [
+    { type: 'laser_horizontal', y: 0.3 },
   ],
-  hard_corridor: [
-    { type: 'spike_both', width: 6 },
+  hard_laser_high: [
+    { type: 'laser_horizontal', y: 0.7 },
+  ],
+  hard_corridor_short: [
+    { type: 'spike_both', width: 3 },
+  ],
+  hard_gap_spike: [
+    { type: 'gap', width: 3 },
+    { type: 'spike_ceiling', width: 2, delay: 0.2 },
+  ],
+  hard_crusher_spike: [
+    { type: 'crusher', y: 0 },
+    { type: 'spike_floor', width: 3, delay: 0.3 },
   ],
   
-  // Nightmare patterns
+  // === NIGHTMARE (90s+) ===
+  nightmare_corridor: [
+    { type: 'spike_both', width: 5 },
+  ],
+  nightmare_double_laser: [
+    { type: 'laser_horizontal', y: 0.3 },
+    { type: 'laser_horizontal', y: 0.7, delay: 0.5 },
+  ],
   nightmare_gauntlet: [
     { type: 'crusher', y: 0 },
-    { type: 'laser_horizontal', y: 0.5, delay: 0.3 },
-    { type: 'spike_both', width: 4, delay: 0.6 },
+    { type: 'spike_floor', width: 2, delay: 0.3 },
+    { type: 'crusher', y: 1, delay: 0.6 },
+  ],
+  nightmare_chaos: [
+    { type: 'spike_floor', width: 2 },
+    { type: 'laser_horizontal', y: 0.5, delay: 0.2 },
+    { type: 'spike_ceiling', width: 2, delay: 0.4 },
+    { type: 'gap', width: 2, delay: 0.7 },
   ],
 };
 
@@ -170,44 +216,58 @@ export const DIFFICULTY_PHASES: DifficultyPhase[] = [
   {
     name: 'BOOT SEQUENCE',
     startTime: 0,
-    scrollSpeedMult: 1.0,
-    obstacleFreqMult: 1.0,
-    availablePatterns: ['easy_floor_spikes', 'easy_ceiling_spikes'],
+    scrollSpeedMult: 0.8,
+    obstacleFreqMult: 1.5,  // Slower obstacles, more time
+    availablePatterns: ['easy_short_floor', 'easy_short_ceiling'],
   },
   {
-    name: 'WARMING UP',
-    startTime: 15,
-    scrollSpeedMult: 1.2,
-    obstacleFreqMult: 0.9,
-    availablePatterns: ['easy_floor_spikes', 'easy_ceiling_spikes', 'easy_alternating'],
+    name: 'CALIBRATING...',
+    startTime: 10,
+    scrollSpeedMult: 0.9,
+    obstacleFreqMult: 1.3,
+    availablePatterns: ['easy_floor_spikes', 'easy_ceiling_spikes', 'easy_gap_small'],
+  },
+  {
+    name: 'SYSTEMS ONLINE',
+    startTime: 25,
+    scrollSpeedMult: 1.0,
+    obstacleFreqMult: 1.1,
+    availablePatterns: ['easy_alternating', 'easy_gap_small', 'medium_gap'],
   },
   {
     name: 'FACTORY FLOOR',
-    startTime: 30,
-    scrollSpeedMult: 1.4,
-    obstacleFreqMult: 0.8,
-    availablePatterns: ['easy_alternating', 'medium_crusher', 'medium_gap'],
+    startTime: 40,
+    scrollSpeedMult: 1.1,
+    obstacleFreqMult: 1.0,
+    availablePatterns: ['medium_long_floor', 'medium_long_ceiling', 'medium_zigzag', 'medium_crusher_floor'],
   },
   {
     name: 'DANGER ZONE',
     startTime: 60,
-    scrollSpeedMult: 1.6,
-    obstacleFreqMult: 0.7,
-    availablePatterns: ['medium_crusher', 'medium_laser', 'medium_gap', 'hard_double_crusher'],
+    scrollSpeedMult: 1.2,
+    obstacleFreqMult: 0.9,
+    availablePatterns: ['medium_crusher_ceiling', 'medium_laser_mid', 'hard_gap_spike', 'hard_crusher_spike'],
   },
   {
     name: 'MELTDOWN',
-    startTime: 90,
-    scrollSpeedMult: 1.8,
-    obstacleFreqMult: 0.6,
-    availablePatterns: ['hard_double_crusher', 'hard_laser_sweep', 'hard_corridor'],
+    startTime: 80,
+    scrollSpeedMult: 1.35,
+    obstacleFreqMult: 0.8,
+    availablePatterns: ['hard_double_crusher', 'hard_laser_low', 'hard_laser_high', 'hard_corridor_short'],
+  },
+  {
+    name: 'CRITICAL',
+    startTime: 100,
+    scrollSpeedMult: 1.5,
+    obstacleFreqMult: 0.7,
+    availablePatterns: ['nightmare_corridor', 'nightmare_double_laser', 'nightmare_gauntlet'],
   },
   {
     name: 'CHAOS MODE',
     startTime: 120,
-    scrollSpeedMult: 2.0,
-    obstacleFreqMult: 0.5,
-    availablePatterns: ['hard_corridor', 'nightmare_gauntlet'],
+    scrollSpeedMult: 1.7,
+    obstacleFreqMult: 0.6,
+    availablePatterns: ['nightmare_corridor', 'nightmare_double_laser', 'nightmare_gauntlet', 'nightmare_chaos'],
   },
 ];
 
