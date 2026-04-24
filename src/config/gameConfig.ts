@@ -1,5 +1,5 @@
 // ============================================
-// FLIP BOT - Factory Roguelike
+// ARAN - Factory Roguelike
 // Theme: MACHINES (Gamedev.js Jam 2026)
 // ============================================
 // 

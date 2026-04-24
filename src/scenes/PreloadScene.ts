@@ -27,7 +27,7 @@ export class PreloadScene extends Phaser.Scene {
     this.progressBar = this.add.graphics();
 
     // Loading text
-    this.add.text(width / 2, height / 2 - 50, 'FLIP WORLD', {
+    this.add.text(width / 2, height / 2 - 50, 'ARAN', {
       fontSize: '32px',
       color: '#ffffff',
       fontFamily: 'Arial'

@@ -90,42 +90,52 @@ export class MenuScene extends Phaser.Scene {
   private createTitle(): void {
     const { width } = this.cameras.main;
     
-    // Robot icon
-    this.add.text(width / 2, 80, '🤖', {
-      fontSize: '64px'
+    // Robot icon with glow
+    const robot = this.add.text(width / 2, 70, '🤖', {
+      fontSize: '72px'
     }).setOrigin(0.5);
     
-    // Title
-    const title = this.add.text(width / 2, 150, 'FLIP BOT', {
-      fontSize: '56px',
+    // Subtle bounce
+    this.tweens.add({
+      targets: robot,
+      y: 65,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
+    // Title - ARAN in stylized text
+    const title = this.add.text(width / 2, 155, 'ARAN', {
+      fontSize: '72px',
       color: '#00FFFF',
       fontFamily: 'monospace',
-      stroke: '#000',
-      strokeThickness: 6
+      stroke: '#003333',
+      strokeThickness: 8
     }).setOrigin(0.5);
     
-    // Glow effect
+    // Glow pulse
     this.tweens.add({
       targets: title,
-      alpha: 0.8,
-      duration: 1500,
+      alpha: 0.85,
+      duration: 1200,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
     
     // Subtitle
-    this.add.text(width / 2, 195, 'FACTORY ESCAPE', {
-      fontSize: '18px',
+    this.add.text(width / 2, 205, 'FACTORY ESCAPE', {
+      fontSize: '16px',
       color: '#FF0080',
       fontFamily: 'monospace',
-      letterSpacing: 8
+      letterSpacing: 6
     }).setOrigin(0.5);
     
     // Theme badge
-    this.add.text(width / 2, 225, '⚙️ MACHINES ⚙️', {
-      fontSize: '12px',
-      color: '#666',
+    const badge = this.add.text(width / 2, 235, '⚙️ GAMEDEV.JS JAM 2026 • MACHINES ⚙️', {
+      fontSize: '10px',
+      color: '#555',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
   }

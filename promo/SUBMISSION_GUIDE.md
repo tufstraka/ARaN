@@ -1,4 +1,4 @@
-# FLIP BOT - itch.io Submission Guide
+# ARAN - itch.io Submission Guide
 
 ## Short Description (for itch.io summary)
 ```
@@ -7,11 +7,11 @@ One-button endless runner. You're a robot escaping a malfunctioning factory. TAP
 
 ## Full Description (copy to itch.io)
 
-### 🤖 FLIP BOT - Factory Escape
+### 🤖 ARAN - Factory Escape
 
-**You are a robot. The factory is going haywire. ESCAPE!**
+**You are ARAN, a sentient robot. The factory is going haywire. ESCAPE!**
 
-FLIP BOT is a one-button endless runner where you play as a sentient robot escaping a malfunctioning factory. The only control? **TAP or SPACE to flip gravity.**
+ARAN is a one-button endless runner where you play as a sentient robot escaping a malfunctioning factory. The only control? **TAP or SPACE to flip gravity.**
 
 Survive crushing pistons, deadly lasers, and electrified spikes as the factory spirals into chaos. Collect gears to unlock permanent upgrades. Chase high scores. Beat your friends.
 
@@ -119,5 +119,5 @@ Web (HTML5)
 
 - 800x450 minimum
 - Feature: Robot character + factory background
-- Include title "FLIP BOT"
+- Include title "ARAN"
 - Show gravity flip concept (arrows up/down)
