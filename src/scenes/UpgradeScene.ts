@@ -1,68 +1,119 @@
 import Phaser from 'phaser';
 import { COLORS, UPGRADES, CONFIG } from '../config/gameConfig';
 import { progression } from '../managers/ProgressionManager';
+import { soundManager } from '../utils/SoundManager';
 
 export class UpgradeScene extends Phaser.Scene {
+  private fromGameOver: boolean = false;
+
   constructor() {
     super({ key: 'UpgradeScene' });
+  }
+
+  init(data: { fromGameOver?: boolean }): void {
+    this.fromGameOver = data?.fromGameOver || false;
   }
 
   create(): void {
     const { width, height } = this.cameras.main;
     
     // Background
-    this.add.rectangle(0, 0, width, height, COLORS.BG_DARK).setOrigin(0);
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(COLORS.BG_GRADIENT_TOP, COLORS.BG_GRADIENT_TOP, COLORS.BG_GRADIENT_BOTTOM, COLORS.BG_GRADIENT_BOTTOM);
+    bg.fillRect(0, 0, width, height);
     
     // Title
-    this.add.text(width / 2, 50, 'UPGRADES', {
-      fontSize: '36px',
+    this.add.text(width / 2, 40, '⚡ UPGRADES ⚡', {
+      fontSize: '32px',
       color: '#00FFFF',
       fontFamily: 'monospace',
       stroke: '#000',
       strokeThickness: 4
     }).setOrigin(0.5);
     
-    // Currency display
-    const currencyText = this.add.text(width / 2, 95, `⚙️ ${progression.currency}`, {
+    // Currency display (prominent)
+    const currencyBg = this.add.graphics();
+    currencyBg.fillStyle(0x1a1a2e, 0.8);
+    currencyBg.fillRoundedRect(width / 2 - 80, 70, 160, 40, 8);
+    currencyBg.lineStyle(2, 0xFFD700, 0.5);
+    currencyBg.strokeRoundedRect(width / 2 - 80, 70, 160, 40, 8);
+    
+    const currencyText = this.add.text(width / 2, 90, `⚙️ ${progression.currency}`, {
       fontSize: '24px',
-      color: '#F39C12',
+      color: '#FFD700',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
     
-    // Upgrade cards
-    const startY = 150;
-    const cardHeight = 90;
-    const cardSpacing = 10;
+    // Upgrade cards - calculate layout
+    const startY = 130;
+    const cardHeight = 75;
+    const cardSpacing = 8;
+    const totalCardsHeight = UPGRADES.length * (cardHeight + cardSpacing);
+    const buttonsY = startY + totalCardsHeight + 15;
     
+    // Create upgrade cards
     UPGRADES.forEach((upgrade, index) => {
       this.createUpgradeCard(
         width / 2,
         startY + index * (cardHeight + cardSpacing),
         upgrade,
-        currencyText
+        currencyText,
+        cardHeight
       );
     });
     
-    // Back button
-    const backY = startY + UPGRADES.length * (cardHeight + cardSpacing) + 30;
-    this.add.text(width / 2, backY, '[ BACK ]', {
-      fontSize: '20px',
-      color: '#666',
-      fontFamily: 'monospace'
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => this.scene.start('MenuScene'))
-      .on('pointerover', function(this: Phaser.GameObjects.Text) { this.setColor('#FFF'); })
-      .on('pointerout', function(this: Phaser.GameObjects.Text) { this.setColor('#666'); });
+    // === BOTTOM BUTTONS ===
+    const buttonWidth = 140;
+    const buttonHeight = 45;
+    const buttonGap = 20;
+    
+    // PLAY button (primary)
+    this.createButton(
+      width / 2 - buttonWidth / 2 - buttonGap / 2, 
+      buttonsY, 
+      '▶ PLAY', 
+      COLORS.NEON_CYAN, 
+      buttonWidth,
+      buttonHeight,
+      () => {
+        soundManager.playClick();
+        this.scene.start('RunnerScene');
+      }
+    );
+    
+    // MENU button (secondary)
+    this.createButton(
+      width / 2 + buttonWidth / 2 + buttonGap / 2, 
+      buttonsY, 
+      '🏠 MENU', 
+      0x666666, 
+      buttonWidth,
+      buttonHeight,
+      () => {
+        soundManager.playClick();
+        this.scene.start('MenuScene');
+      }
+    );
+    
+    // If there's room, show tip
+    if (height > buttonsY + 100) {
+      this.add.text(width / 2, buttonsY + 70, 'Gears carry over between runs!', {
+        fontSize: '12px',
+        color: '#555',
+        fontFamily: 'monospace'
+      }).setOrigin(0.5);
+    }
   }
 
   private createUpgradeCard(
     x: number, 
     y: number, 
     upgrade: typeof UPGRADES[0],
-    currencyText: Phaser.GameObjects.Text
+    currencyText: Phaser.GameObjects.Text,
+    cardHeight: number
   ): void {
-    const cardWidth = 500;
-    const cardHeight = 80;
+    const { width } = this.cameras.main;
+    const cardWidth = Math.min(480, width - 40);
     
     const currentLevel = progression.getUpgradeLevel(upgrade.id);
     const isMaxed = currentLevel >= upgrade.maxLevel;
@@ -72,97 +123,143 @@ export class UpgradeScene extends Phaser.Scene {
     
     // Card background
     const card = this.add.graphics();
-    card.fillStyle(0x1a1a2e, 0.9);
+    const bgColor = isMaxed ? 0x1a3a1a : 0x1a1a2e;
+    card.fillStyle(bgColor, 0.9);
     card.fillRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 8);
-    card.lineStyle(2, isMaxed ? 0x39FF14 : (canAfford ? COLORS.NEON_CYAN : 0x444444), 0.6);
+    
+    const borderColor = isMaxed ? 0x39FF14 : (canAfford ? COLORS.NEON_CYAN : 0x333333);
+    card.lineStyle(2, borderColor, 0.6);
     card.strokeRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 8);
     
     // Icon
-    this.add.text(x - cardWidth / 2 + 30, y + cardHeight / 2, upgrade.icon, {
-      fontSize: '32px'
+    this.add.text(x - cardWidth / 2 + 25, y + cardHeight / 2, upgrade.icon, {
+      fontSize: '28px'
     }).setOrigin(0.5);
     
-    // Name
-    this.add.text(x - cardWidth / 2 + 70, y + 15, upgrade.name, {
-      fontSize: '18px',
-      color: '#FFFFFF',
+    // Name + Level
+    const levelStr = isMaxed ? ' (MAX)' : ` Lv.${currentLevel}`;
+    this.add.text(x - cardWidth / 2 + 55, y + 12, upgrade.name + levelStr, {
+      fontSize: '15px',
+      color: isMaxed ? '#39FF14' : '#FFFFFF',
       fontFamily: 'monospace'
     });
     
     // Description with current effect
     const effectValue = upgrade.effect(currentLevel);
-    const nextEffectValue = upgrade.effect(currentLevel + 1);
     let descText = upgrade.description.replace('{n}', effectValue.toString());
     
-    if (!isMaxed) {
-      descText += ` → ${nextEffectValue}`;
-    }
-    
-    this.add.text(x - cardWidth / 2 + 70, y + 40, descText, {
-      fontSize: '12px',
+    this.add.text(x - cardWidth / 2 + 55, y + 32, descText, {
+      fontSize: '11px',
       color: '#888',
       fontFamily: 'monospace'
     });
     
-    // Level indicators
+    // Level pips
+    const pipsStartX = x - cardWidth / 2 + 55;
     for (let i = 0; i < upgrade.maxLevel; i++) {
-      const dotX = x + cardWidth / 2 - 150 + i * 20;
-      const dotColor = i < currentLevel ? 0x39FF14 : 0x333333;
-      this.add.circle(dotX, y + 25, 6, dotColor);
+      const pipColor = i < currentLevel ? 0x39FF14 : 0x333333;
+      this.add.rectangle(pipsStartX + i * 18, y + 55, 12, 8, pipColor).setOrigin(0, 0.5);
     }
     
-    // Buy button / Status
+    // Buy button or MAX badge
     if (isMaxed) {
-      this.add.text(x + cardWidth / 2 - 60, y + cardHeight / 2, 'MAX', {
-        fontSize: '16px',
+      this.add.text(x + cardWidth / 2 - 50, y + cardHeight / 2, '✓ MAX', {
+        fontSize: '14px',
         color: '#39FF14',
         fontFamily: 'monospace'
       }).setOrigin(0.5);
     } else {
-      const btnColor = canAfford ? COLORS.NEON_CYAN : 0x444444;
+      const btnWidth = 70;
+      const btnHeight = 32;
+      const btnX = x + cardWidth / 2 - 55;
+      const btnY = y + cardHeight / 2;
       
       const btn = this.add.graphics();
-      btn.fillStyle(btnColor, 0.3);
-      btn.fillRoundedRect(x + cardWidth / 2 - 100, y + cardHeight / 2 - 15, 80, 30, 4);
-      btn.lineStyle(1, btnColor, 0.8);
-      btn.strokeRoundedRect(x + cardWidth / 2 - 100, y + cardHeight / 2 - 15, 80, 30, 4);
+      const btnColor = canAfford ? COLORS.NEON_CYAN : 0x444444;
       
-      const btnText = this.add.text(x + cardWidth / 2 - 60, y + cardHeight / 2, `⚙️${cost}`, {
-        fontSize: '14px',
-        color: canAfford ? '#FFFFFF' : '#666',
+      btn.fillStyle(btnColor, canAfford ? 0.3 : 0.1);
+      btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
+      btn.lineStyle(1, btnColor, canAfford ? 0.8 : 0.3);
+      btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
+      
+      const btnText = this.add.text(btnX, btnY, `⚙️${cost}`, {
+        fontSize: '13px',
+        color: canAfford ? '#FFFFFF' : '#555',
         fontFamily: 'monospace'
       }).setOrigin(0.5);
       
       if (canAfford) {
-        const hitArea = this.add.rectangle(
-          x + cardWidth / 2 - 60, 
-          y + cardHeight / 2, 
-          80, 30, 0x000000, 0
-        ).setInteractive({ useHandCursor: true });
+        const hitArea = this.add.rectangle(btnX, btnY, btnWidth, btnHeight, 0x000000, 0);
+        hitArea.setInteractive({ useHandCursor: true });
         
         hitArea.on('pointerdown', () => {
           if (progression.upgradeLevel(upgrade.id, upgrade.maxLevel, cost)) {
-            // Refresh scene
+            soundManager.playCoinCollect();
             this.scene.restart();
           }
         });
         
         hitArea.on('pointerover', () => {
+          soundManager.playHover();
           btn.clear();
           btn.fillStyle(btnColor, 0.5);
-          btn.fillRoundedRect(x + cardWidth / 2 - 100, y + cardHeight / 2 - 15, 80, 30, 4);
-          btn.lineStyle(1, btnColor, 1);
-          btn.strokeRoundedRect(x + cardWidth / 2 - 100, y + cardHeight / 2 - 15, 80, 30, 4);
+          btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
+          btn.lineStyle(2, btnColor, 1);
+          btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
         });
         
         hitArea.on('pointerout', () => {
           btn.clear();
           btn.fillStyle(btnColor, 0.3);
-          btn.fillRoundedRect(x + cardWidth / 2 - 100, y + cardHeight / 2 - 15, 80, 30, 4);
+          btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
           btn.lineStyle(1, btnColor, 0.8);
-          btn.strokeRoundedRect(x + cardWidth / 2 - 100, y + cardHeight / 2 - 15, 80, 30, 4);
+          btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
         });
       }
     }
+  }
+
+  private createButton(
+    x: number, 
+    y: number, 
+    text: string, 
+    color: number, 
+    width: number,
+    height: number,
+    callback: () => void
+  ): void {
+    const btn = this.add.graphics();
+    btn.fillStyle(color, 0.2);
+    btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+    btn.lineStyle(2, color, 0.8);
+    btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+    
+    const label = this.add.text(x, y, text, {
+      fontSize: '16px',
+      color: '#FFFFFF',
+      fontFamily: 'monospace'
+    }).setOrigin(0.5);
+    
+    const hitArea = this.add.rectangle(x, y, width, height, 0x000000, 0);
+    hitArea.setInteractive({ useHandCursor: true });
+    
+    hitArea.on('pointerover', () => {
+      soundManager.playHover();
+      btn.clear();
+      btn.fillStyle(color, 0.4);
+      btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+      btn.lineStyle(2, color, 1);
+      btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+    });
+    
+    hitArea.on('pointerout', () => {
+      btn.clear();
+      btn.fillStyle(color, 0.2);
+      btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+      btn.lineStyle(2, color, 0.8);
+      btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+    });
+    
+    hitArea.on('pointerdown', callback);
   }
 }
