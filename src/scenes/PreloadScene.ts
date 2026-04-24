@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS } from '../config/constants';
+import { COLORS } from '../config/gameConfig';
 
 export class PreloadScene extends Phaser.Scene {
   private loadingBar!: Phaser.GameObjects.Graphics;
@@ -36,7 +36,7 @@ export class PreloadScene extends Phaser.Scene {
     // Update progress bar
     this.load.on('progress', (value: number) => {
       this.progressBar.clear();
-      this.progressBar.fillStyle(COLORS.PRIMARY, 1);
+      this.progressBar.fillStyle(COLORS.NEON_CYAN, 1);
       this.progressBar.fillRect(
         width / 4 + 10,
         height / 2 - 15,
@@ -70,46 +70,51 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private createTextures(): void {
-    // Create ROBOT texture (cute robot character - MACHINES theme!)
+    // Create ROBOT texture - BRIGHT AND VISIBLE!
     const pipGraphics = this.make.graphics({ x: 0, y: 0 });
     
-    // Robot body (metallic silver/blue)
-    pipGraphics.fillStyle(0x5DADE2); // Light blue metal
+    // Glow effect (larger, behind)
+    pipGraphics.fillStyle(0x00FFFF, 0.3);
+    pipGraphics.fillCircle(16, 16, 18);
+    
+    // Robot body (bright cyan)
+    pipGraphics.fillStyle(0x66D9FF);
     pipGraphics.fillRoundedRect(4, 6, 24, 22, 4);
     
-    // Robot head top (antenna base)
-    pipGraphics.fillStyle(0x85929E); // Gray metal
+    // Body highlight
+    pipGraphics.fillStyle(0x99EEFF, 0.6);
+    pipGraphics.fillRoundedRect(6, 8, 20, 4, 2);
+    
+    // Antenna
+    pipGraphics.fillStyle(0xAAAAAA);
     pipGraphics.fillRect(14, 2, 4, 6);
     
-    // Antenna light
-    pipGraphics.fillStyle(0x00FF00); // Green LED
-    pipGraphics.fillCircle(16, 2, 3);
+    // Antenna light (pulsing green)
+    pipGraphics.fillStyle(0x00FF00);
+    pipGraphics.fillCircle(16, 2, 4);
+    pipGraphics.fillStyle(0x88FF88);
+    pipGraphics.fillCircle(15, 1, 2);
     
-    // Eye visor (screen)
-    pipGraphics.fillStyle(0x1A1A2E); // Dark screen
+    // Eye visor
+    pipGraphics.fillStyle(0x112233);
     pipGraphics.fillRoundedRect(6, 10, 20, 8, 2);
     
-    // Robot eyes (LED lights)
-    pipGraphics.fillStyle(0x00FFFF); // Cyan glow
-    pipGraphics.fillCircle(11, 14, 3);
-    pipGraphics.fillCircle(21, 14, 3);
+    // Robot eyes (BRIGHT cyan)
+    pipGraphics.fillStyle(0x00FFFF);
+    pipGraphics.fillCircle(11, 14, 4);
+    pipGraphics.fillCircle(21, 14, 4);
     
     // Eye shine
     pipGraphics.fillStyle(0xFFFFFF);
-    pipGraphics.fillCircle(10, 13, 1);
-    pipGraphics.fillCircle(20, 13, 1);
+    pipGraphics.fillCircle(9, 12, 2);
+    pipGraphics.fillCircle(19, 12, 2);
     
-    // Robot mouth (speaker grille)
-    pipGraphics.fillStyle(0x2C3E50);
+    // Mouth
+    pipGraphics.fillStyle(0x334455);
     pipGraphics.fillRect(10, 20, 12, 4);
-    // Grille lines
-    pipGraphics.lineStyle(1, 0x1A1A2E);
-    pipGraphics.lineBetween(12, 20, 12, 24);
-    pipGraphics.lineBetween(16, 20, 16, 24);
-    pipGraphics.lineBetween(20, 20, 20, 24);
     
-    // Robot body bolts
-    pipGraphics.fillStyle(0x85929E);
+    // Body bolts
+    pipGraphics.fillStyle(0xCCCCCC);
     pipGraphics.fillCircle(6, 8, 2);
     pipGraphics.fillCircle(26, 8, 2);
     
@@ -136,23 +141,29 @@ export class PreloadScene extends Phaser.Scene {
     platformGraphics.generateTexture('platform', 32, 32);
     platformGraphics.destroy();
 
-    // Create GEAR/COG texture (collectible - replaces coins)
+    // Create GEAR/COG texture - BRIGHT GOLD!
     const coinGraphics = this.make.graphics({ x: 0, y: 0 });
+    // Glow
+    coinGraphics.fillStyle(0xFFD700, 0.3);
+    coinGraphics.fillCircle(12, 12, 14);
     // Outer gear
-    coinGraphics.fillStyle(0xF39C12); // Bronze/gold
+    coinGraphics.fillStyle(0xFFD700);
     coinGraphics.fillCircle(12, 12, 10);
     // Gear teeth
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
       const x = 12 + Math.cos(angle) * 10;
       const y = 12 + Math.sin(angle) * 10;
-      coinGraphics.fillRect(x - 2, y - 2, 4, 4);
+      coinGraphics.fillRect(x - 3, y - 3, 6, 6);
     }
     // Inner circle
-    coinGraphics.fillStyle(0xE67E22);
+    coinGraphics.fillStyle(0xFFA500);
     coinGraphics.fillCircle(12, 12, 5);
+    // Shine
+    coinGraphics.fillStyle(0xFFFFFF, 0.6);
+    coinGraphics.fillCircle(9, 9, 3);
     // Center hole
-    coinGraphics.fillStyle(0x1A1A2E);
+    coinGraphics.fillStyle(0x333333);
     coinGraphics.fillCircle(12, 12, 2);
     coinGraphics.generateTexture('coin', 24, 24);
     coinGraphics.destroy();

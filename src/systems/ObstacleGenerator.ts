@@ -165,12 +165,29 @@ export class ObstacleGenerator {
     
     for (let i = 0; i < widthTiles; i++) {
       const spike = this.scene.add.graphics();
-      spike.fillStyle(COLORS.DANGER_RED);
       
+      // Glow effect
+      spike.fillStyle(COLORS.WARNING_YELLOW, 0.3);
+      if (flipped) {
+        spike.fillTriangle(-4, -4, 16, 36, 36, -4);
+      } else {
+        spike.fillTriangle(-4, 36, 16, -4, 36, 36);
+      }
+      
+      // Main spike - BRIGHT YELLOW
+      spike.fillStyle(COLORS.WARNING_YELLOW);
       if (flipped) {
         spike.fillTriangle(0, 0, 16, 32, 32, 0);
       } else {
         spike.fillTriangle(0, 32, 16, 0, 32, 32);
+      }
+      
+      // Highlight
+      spike.fillStyle(0xFFFFFF, 0.4);
+      if (flipped) {
+        spike.fillTriangle(8, 4, 16, 20, 24, 4);
+      } else {
+        spike.fillTriangle(8, 28, 16, 12, 24, 28);
       }
       
       spike.setPosition(i * 32, flipped ? 0 : -32);

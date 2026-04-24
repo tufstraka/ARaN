@@ -204,15 +204,23 @@ export class RunnerScene extends Phaser.Scene {
     floorSprite.setVisible(false);
     floorSprite.refreshBody();
     
-    // Visual floor
+    // Visual floor - BRIGHTER
     const floorGraphics = this.add.graphics();
-    floorGraphics.fillStyle(COLORS.STEEL);
+    floorGraphics.fillStyle(0x4a5568); // Brighter steel
     floorGraphics.fillRect(0, height - 60, width, 60);
+    // Top edge highlight
+    floorGraphics.fillStyle(0x00FFFF, 0.3);
+    floorGraphics.fillRect(0, height - 60, width, 3);
     // Rivets
     for (let x = 20; x < width; x += 50) {
-      floorGraphics.fillStyle(COLORS.CHROME, 0.5);
-      floorGraphics.fillCircle(x, height - 50, 4);
+      floorGraphics.fillStyle(0x9CA3AF);
+      floorGraphics.fillCircle(x, height - 45, 4);
       floorGraphics.fillCircle(x, height - 20, 4);
+    }
+    // Warning stripes
+    floorGraphics.fillStyle(0xFFD700, 0.2);
+    for (let x = 0; x < width; x += 40) {
+      floorGraphics.fillRect(x, height - 60, 20, 5);
     }
     
     // Ceiling
@@ -222,14 +230,19 @@ export class RunnerScene extends Phaser.Scene {
     ceilingSprite.setVisible(false);
     ceilingSprite.refreshBody();
     
-    // Visual ceiling
+    // Visual ceiling - BRIGHTER
     const ceilingGraphics = this.add.graphics();
-    ceilingGraphics.fillStyle(COLORS.STEEL);
+    ceilingGraphics.fillStyle(0x4a5568);
     ceilingGraphics.fillRect(0, 0, width, 60);
-    // Pipes
-    for (let x = 30; x < width; x += 80) {
-      ceilingGraphics.fillStyle(COLORS.RUST, 0.6);
-      ceilingGraphics.fillRect(x, 50, 20, 10);
+    // Bottom edge highlight
+    ceilingGraphics.fillStyle(0xFF0080, 0.3);
+    ceilingGraphics.fillRect(0, 57, width, 3);
+    // Industrial pipes
+    for (let x = 30; x < width; x += 100) {
+      ceilingGraphics.fillStyle(0x8B4513); // Rust
+      ceilingGraphics.fillRect(x, 45, 30, 15);
+      ceilingGraphics.fillStyle(0xAA5500);
+      ceilingGraphics.fillCircle(x + 15, 52, 6);
     }
   }
 
@@ -237,6 +250,7 @@ export class RunnerScene extends Phaser.Scene {
     const { height } = this.cameras.main;
     
     this.bot = this.physics.add.sprite(CONFIG.BOT_X_POSITION, height - 100, 'pip');
+    this.bot.setScale(1.5); // Make robot bigger!
     this.bot.setCollideWorldBounds(true);
     this.bot.setBounce(0);
     this.bot.setGravityY(CONFIG.GRAVITY);

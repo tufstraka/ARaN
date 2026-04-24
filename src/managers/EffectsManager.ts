@@ -134,26 +134,16 @@ export class EffectsManager {
     
     this.vignette?.clear();
     
-    // Radial gradient vignette
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
+    // Simple corner vignette (much lighter)
+    const gradient = this.vignette;
+    if (!gradient) return;
     
-    for (let i = 0; i < 20; i++) {
-      const ratio = i / 20;
-      const alpha = ratio * ratio * 0.4; // Quadratic falloff
-      const radius = maxRadius * (1 - ratio * 0.3);
-      
-      this.vignette?.fillStyle(0x000000, alpha);
-      this.vignette?.fillRect(0, 0, width, height);
-    }
-    
-    // Corner darkening
-    this.vignette?.fillStyle(0x000000, 0.3);
-    this.vignette?.fillTriangle(0, 0, 150, 0, 0, 150);
-    this.vignette?.fillTriangle(width, 0, width - 150, 0, width, 150);
-    this.vignette?.fillTriangle(0, height, 150, height, 0, height - 150);
-    this.vignette?.fillTriangle(width, height, width - 150, height, width, height - 150);
+    // Only darken corners slightly
+    gradient.fillStyle(0x000000, 0.15);
+    gradient.fillTriangle(0, 0, 120, 0, 0, 120);
+    gradient.fillTriangle(width, 0, width - 120, 0, width, 120);
+    gradient.fillTriangle(0, height, 120, height, 0, height - 120);
+    gradient.fillTriangle(width, height, width - 120, height, width, height - 120);
   }
   
   private onResize(): void {
