@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>FLIP BOT - Magnetic Polarity Robot | Gamedev.js Jam 2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0D0D1A">
+  
+  <title>FLIP BOT - Factory Escape | Gamedev.js Jam 2026</title>
+  <meta name="description" content="One-button endless runner. Flip gravity to escape the malfunctioning factory!">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  
   <style>
     * {
       margin: 0;
@@ -15,10 +24,17 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #1a1a2e;
+      background-color: #0D0D1A;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     
     #game-container {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       display: flex;
@@ -26,14 +42,164 @@
       align-items: center;
     }
     
-    canvas {
-      max-width: 100%;
-      max-height: 100%;
+    #game-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+    }
+    
+    /* Loading screen */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #1a1a2e 0%, #0D0D1A 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease;
+    }
+    
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    #loading .logo {
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    #loading .title {
+      font-family: monospace;
+      font-size: 32px;
+      color: #00FFFF;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px #00FFFF40;
+    }
+    
+    #loading .bar-container {
+      width: 200px;
+      height: 4px;
+      background: #1a1a2e;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    #loading .bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #00FFFF, #FF0080);
+      border-radius: 2px;
+      animation: loading 2s ease-in-out infinite;
+    }
+    
+    #loading .hint {
+      margin-top: 40px;
+      font-family: monospace;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    @keyframes loading {
+      0% { width: 0%; margin-left: 0%; }
+      50% { width: 100%; margin-left: 0%; }
+      100% { width: 0%; margin-left: 100%; }
+    }
+    
+    /* Fullscreen button for mobile */
+    #fullscreen-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 8px;
+      color: #00FFFF;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 100;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    
+    #fullscreen-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+      border-color: rgba(0, 255, 255, 0.6);
+    }
+    
+    @media (max-width: 768px) {
+      #fullscreen-btn {
+        display: flex;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="loading">
+    <div class="logo">🤖</div>
+    <div class="title">FLIP BOT</div>
+    <div class="bar-container">
+      <div class="bar"></div>
+    </div>
+    <div class="hint">TAP or SPACE to flip gravity</div>
+  </div>
+  
+  <!-- Game Container -->
   <div id="game-container"></div>
+  
+  <!-- Fullscreen Button -->
+  <button id="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+  
+  <script>
+    // Hide loading screen when game loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+      }, 1500);
+    });
+    
+    // Fullscreen toggle
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log('Fullscreen failed:', err);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+    
+    // Prevent zoom on double tap (iOS)
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+    
+    // Prevent context menu
+    document.addEventListener('contextmenu', e => e.preventDefault());
+  </script>
+  
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

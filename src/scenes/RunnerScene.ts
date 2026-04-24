@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CONFIG, COLORS, UPGRADES } from '../config/gameConfig';
 import { ObstacleGenerator } from '../systems/ObstacleGenerator';
 import { progression } from '../managers/ProgressionManager';
+import { EffectsManager } from '../managers/EffectsManager';
 import { soundManager } from '../utils/SoundManager';
 
 /**
@@ -18,6 +19,7 @@ export class RunnerScene extends Phaser.Scene {
   
   // Systems
   private obstacleGenerator!: ObstacleGenerator;
+  private effects!: EffectsManager;
   
   // Scoring
   private score: number = 0;
@@ -68,6 +70,8 @@ export class RunnerScene extends Phaser.Scene {
     
     // Initialize systems
     this.obstacleGenerator = new ObstacleGenerator(this);
+    this.effects = new EffectsManager(this);
+    this.effects.create();
     
     // Create gear collectibles group
     this.gearsGroup = this.physics.add.group({ allowGravity: false });
@@ -86,6 +90,33 @@ export class RunnerScene extends Phaser.Scene {
     
     // Camera effects
     this.cameras.main.fadeIn(300);
+    
+    // Start trail effect
+    this.effects.startTrail(this.bot);
+    
+    // Handle resize
+    this.scale.on('resize', this.onResize, this);
+  }
+  
+  private onResize(gameSize: Phaser.Structs.Size): void {
+    // Update camera bounds
+    this.cameras.main.setSize(gameSize.width, gameSize.height);
+    
+    // Recreate boundaries
+    this.floor?.clear(true, true);
+    this.ceiling?.clear(true, true);
+    this.createBoundaries();
+    
+    // Update UI positions
+    this.updateUIPositions();
+  }
+  
+  private updateUIPositions(): void {
+    const { width } = this.cameras.main;
+    
+    this.scoreText?.setPosition(width / 2, 80);
+    this.comboText?.setPosition(width / 2, 120);
+    this.phaseText?.setPosition(width - 20, 70);
   }
 
   private applyUpgrades(): void {
@@ -346,34 +377,12 @@ export class RunnerScene extends Phaser.Scene {
       );
     }
     
-    // Particles
-    this.emitFlipParticles();
+    // Particles and effects
+    this.effects.emitFlip(this.bot.x, this.bot.y);
+    this.effects.updateTrailColor(this.isFlipped);
     
     // Sound
     soundManager.playFlip();
-  }
-
-  private emitFlipParticles(): void {
-    if (!progression.settings.particles) return;
-    
-    for (let i = 0; i < 8; i++) {
-      const particle = this.add.circle(
-        this.bot.x + Phaser.Math.Between(-20, 20),
-        this.bot.y + Phaser.Math.Between(-20, 20),
-        Phaser.Math.Between(2, 5),
-        COLORS.NEON_CYAN
-      );
-      
-      this.tweens.add({
-        targets: particle,
-        alpha: 0,
-        scale: 0,
-        x: particle.x + Phaser.Math.Between(-50, 50),
-        y: particle.y + Phaser.Math.Between(-50, 50),
-        duration: 300,
-        onComplete: () => particle.destroy()
-      });
-    }
   }
 
   private startGearSpawner(): void {
@@ -433,36 +442,17 @@ export class RunnerScene extends Phaser.Scene {
     // Update UI
     this.updateUI();
     
-    // Score popup
-    this.showScorePopup(gearSprite.x, gearSprite.y, points);
-    
     // Effects
+    this.effects.emitCollect(gearSprite.x, gearSprite.y);
+    this.effects.comboFlash(this.combo);
+    this.effects.popupText(gearSprite.x, gearSprite.y, `+${points}`, {
+      color: this.combo >= 5 ? '#FF0080' : this.combo >= 3 ? '#FFD700' : '#FFFFFF',
+      size: this.combo >= 5 ? 28 : 20
+    });
+    
     soundManager.playCoinCollect();
-    if (progression.settings.screenShake) {
-      this.cameras.main.shake(CONFIG.SHAKE_GEAR.duration, CONFIG.SHAKE_GEAR.intensity);
-    }
     
     gearSprite.destroy();
-  }
-
-  private showScorePopup(x: number, y: number, points: number): void {
-    const color = this.combo >= 5 ? '#FF0080' : this.combo >= 3 ? '#FFD700' : '#FFFFFF';
-    
-    const popup = this.add.text(x, y, `+${points}`, {
-      fontSize: this.combo >= 5 ? '28px' : '20px',
-      color: color,
-      fontFamily: 'monospace',
-      stroke: '#000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
-    
-    this.tweens.add({
-      targets: popup,
-      y: y - 60,
-      alpha: 0,
-      duration: 600,
-      onComplete: () => popup.destroy()
-    });
   }
 
   private hitObstacle(): void {
@@ -472,7 +462,8 @@ export class RunnerScene extends Phaser.Scene {
       this.updateShieldVisual();
       
       // Shield break effect
-      this.cameras.main.flash(200, 0, 255, 255);
+      this.effects.flash(COLORS.NEON_CYAN, 200);
+      this.effects.impactFreeze(30);
       soundManager.playFlip();
       
       // Brief invulnerability
@@ -489,13 +480,18 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   private gameOver(): void {
+    // Stop effects
+    this.effects.stopTrail();
+    
     // Stop physics
     this.physics.pause();
     
     // Death effects
     soundManager.playDeath();
+    this.effects.emitDeath(this.bot.x, this.bot.y);
+    this.effects.impactFreeze(100);
     this.cameras.main.shake(CONFIG.SHAKE_DEATH.duration, CONFIG.SHAKE_DEATH.intensity);
-    this.cameras.main.flash(300, 255, 0, 0);
+    this.effects.flash(COLORS.DANGER_RED, 300);
     
     // Record run
     progression.recordRun(
