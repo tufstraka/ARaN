@@ -70,55 +70,122 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private createTextures(): void {
-    // Create ROBOT texture - BRIGHT AND VISIBLE!
+    // Create ROBOT texture - FULL BODY WITH LIFE! (48x48 for more detail)
     const pipGraphics = this.make.graphics({ x: 0, y: 0 });
+    const cx = 24, cy = 24; // Center
     
-    // Glow effect (larger, behind)
-    pipGraphics.fillStyle(0x00FFFF, 0.3);
-    pipGraphics.fillCircle(16, 16, 18);
+    // Outer glow
+    pipGraphics.fillStyle(0x00FFFF, 0.2);
+    pipGraphics.fillCircle(cx, cy, 26);
     
-    // Robot body (bright cyan)
+    // === LEGS ===
+    pipGraphics.fillStyle(0x4a5a6a);
+    // Left leg
+    pipGraphics.fillRect(cx - 10, cy + 12, 6, 12);
+    pipGraphics.fillRect(cx - 12, cy + 22, 8, 4);
+    // Right leg (slightly forward)
+    pipGraphics.fillRect(cx + 4, cy + 10, 6, 14);
+    pipGraphics.fillRect(cx + 2, cy + 22, 8, 4);
+    // Leg highlights
+    pipGraphics.fillStyle(0x6a7a8a);
+    pipGraphics.fillRect(cx - 9, cy + 13, 2, 10);
+    pipGraphics.fillRect(cx + 5, cy + 11, 2, 12);
+    
+    // === ARMS ===
+    pipGraphics.fillStyle(0x4a5a6a);
+    // Left arm (raised)
+    pipGraphics.fillRect(cx - 18, cy - 8, 5, 14);
+    // Left hand
     pipGraphics.fillStyle(0x66D9FF);
-    pipGraphics.fillRoundedRect(4, 6, 24, 22, 4);
+    pipGraphics.fillCircle(cx - 16, cy - 12, 4);
+    // Right arm (down)
+    pipGraphics.fillStyle(0x4a5a6a);
+    pipGraphics.fillRect(cx + 13, cy - 2, 5, 12);
+    pipGraphics.fillStyle(0x66D9FF);
+    pipGraphics.fillCircle(cx + 15, cy + 12, 4);
     
+    // === BODY ===
+    // Body shadow
+    pipGraphics.fillStyle(0x000000, 0.2);
+    pipGraphics.fillRoundedRect(cx - 12, cy - 10, 24, 24, 4);
+    // Main body
+    pipGraphics.fillStyle(0x66D9FF);
+    pipGraphics.fillRoundedRect(cx - 13, cy - 12, 26, 26, 5);
     // Body highlight
-    pipGraphics.fillStyle(0x99EEFF, 0.6);
-    pipGraphics.fillRoundedRect(6, 8, 20, 4, 2);
+    pipGraphics.fillStyle(0x99EEFF, 0.5);
+    pipGraphics.fillRoundedRect(cx - 10, cy - 10, 20, 6, 3);
+    // Chest core
+    pipGraphics.fillStyle(0x00FFFF);
+    pipGraphics.fillCircle(cx, cy + 4, 5);
+    pipGraphics.fillStyle(0xFFFFFF, 0.7);
+    pipGraphics.fillCircle(cx - 1, cy + 2, 2);
+    
+    // === HEAD ===
+    // Neck
+    pipGraphics.fillStyle(0x3a4a5a);
+    pipGraphics.fillRect(cx - 4, cy - 16, 8, 5);
+    // Head shadow
+    pipGraphics.fillStyle(0x000000, 0.15);
+    pipGraphics.fillRoundedRect(cx - 11, cy - 32, 22, 18, 4);
+    // Main head
+    pipGraphics.fillStyle(0x77DDFF);
+    pipGraphics.fillRoundedRect(cx - 12, cy - 34, 24, 20, 5);
+    // Head highlight
+    pipGraphics.fillStyle(0xAAEEFF, 0.4);
+    pipGraphics.fillRoundedRect(cx - 9, cy - 32, 18, 5, 2);
     
     // Antenna
-    pipGraphics.fillStyle(0xAAAAAA);
-    pipGraphics.fillRect(14, 2, 4, 6);
-    
-    // Antenna light (pulsing green)
+    pipGraphics.fillStyle(0x888888);
+    pipGraphics.fillRect(cx - 2, cy - 40, 4, 7);
+    // Antenna light
     pipGraphics.fillStyle(0x00FF00);
-    pipGraphics.fillCircle(16, 2, 4);
-    pipGraphics.fillStyle(0x88FF88);
-    pipGraphics.fillCircle(15, 1, 2);
+    pipGraphics.fillCircle(cx, cy - 42, 4);
+    pipGraphics.fillStyle(0xAAFFAA);
+    pipGraphics.fillCircle(cx - 1, cy - 43, 2);
     
-    // Eye visor
-    pipGraphics.fillStyle(0x112233);
-    pipGraphics.fillRoundedRect(6, 10, 20, 8, 2);
+    // Visor
+    pipGraphics.fillStyle(0x0a1520);
+    pipGraphics.fillRoundedRect(cx - 10, cy - 30, 20, 12, 3);
     
-    // Robot eyes (BRIGHT cyan)
+    // Eyes (expressive, looking up-right)
     pipGraphics.fillStyle(0x00FFFF);
-    pipGraphics.fillCircle(11, 14, 4);
-    pipGraphics.fillCircle(21, 14, 4);
-    
-    // Eye shine
+    pipGraphics.fillCircle(cx - 5, cy - 25, 4);
+    pipGraphics.fillCircle(cx + 5, cy - 24, 5); // Right eye bigger
+    // Pupils
     pipGraphics.fillStyle(0xFFFFFF);
-    pipGraphics.fillCircle(9, 12, 2);
-    pipGraphics.fillCircle(19, 12, 2);
+    pipGraphics.fillCircle(cx - 4, cy - 26, 2);
+    pipGraphics.fillCircle(cx + 6, cy - 26, 2);
+    // Sparkles
+    pipGraphics.fillCircle(cx - 5, cy - 27, 1);
+    pipGraphics.fillCircle(cx + 5, cy - 27, 1);
     
-    // Mouth
-    pipGraphics.fillStyle(0x334455);
-    pipGraphics.fillRect(10, 20, 12, 4);
+    // Smile
+    pipGraphics.lineStyle(2, 0x334455);
+    pipGraphics.beginPath();
+    pipGraphics.arc(cx, cy - 19, 4, 0.3, Math.PI - 0.3);
+    pipGraphics.strokePath();
+    
+    // Cheek blush
+    pipGraphics.fillStyle(0xFF6688, 0.3);
+    pipGraphics.fillCircle(cx - 9, cy - 21, 3);
+    pipGraphics.fillCircle(cx + 9, cy - 21, 3);
+    
+    // Ear pieces
+    pipGraphics.fillStyle(0x4a6080);
+    pipGraphics.fillCircle(cx - 14, cy - 25, 4);
+    pipGraphics.fillCircle(cx + 14, cy - 25, 4);
+    pipGraphics.fillStyle(0xFF0080);
+    pipGraphics.fillCircle(cx - 14, cy - 25, 2);
+    pipGraphics.fillCircle(cx + 14, cy - 25, 2);
     
     // Body bolts
-    pipGraphics.fillStyle(0xCCCCCC);
-    pipGraphics.fillCircle(6, 8, 2);
-    pipGraphics.fillCircle(26, 8, 2);
+    pipGraphics.fillStyle(0xAABBCC);
+    pipGraphics.fillCircle(cx - 10, cy - 6, 2);
+    pipGraphics.fillCircle(cx + 10, cy - 6, 2);
+    pipGraphics.fillCircle(cx - 10, cy + 8, 2);
+    pipGraphics.fillCircle(cx + 10, cy + 8, 2);
     
-    pipGraphics.generateTexture('pip', 32, 32);
+    pipGraphics.generateTexture('pip', 48, 48);
     pipGraphics.destroy();
 
     // Create METAL PLATFORM texture (industrial/factory style)

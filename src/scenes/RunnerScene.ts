@@ -282,7 +282,7 @@ export class RunnerScene extends Phaser.Scene {
     const { height } = this.cameras.main;
     
     this.bot = this.physics.add.sprite(CONFIG.BOT_X_POSITION, height - 100, 'pip');
-    this.bot.setScale(1.5); // Make robot bigger!
+    this.bot.setScale(1.0); // Robot is now 48x48 with full body
     this.bot.setCollideWorldBounds(true);
     this.bot.setBounce(0);
     this.bot.setGravityY(CONFIG.GRAVITY);
