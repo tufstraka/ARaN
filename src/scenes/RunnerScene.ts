@@ -1,0 +1,603 @@
+import Phaser from 'phaser';
+import { CONFIG, COLORS, UPGRADES } from '../config/gameConfig';
+import { ObstacleGenerator } from '../systems/ObstacleGenerator';
+import { progression } from '../managers/ProgressionManager';
+import { soundManager } from '../utils/SoundManager';
+
+/**
+ * Main endless runner game scene
+ * ONE BUTTON CONTROLS - Tap/Space to flip gravity
+ */
+export class RunnerScene extends Phaser.Scene {
+  // Player
+  private bot!: Phaser.Physics.Arcade.Sprite;
+  private isFlipped: boolean = false;
+  private isFlipping: boolean = false;
+  private shields: number = 0;
+  private shieldVisual?: Phaser.GameObjects.Arc;
+  
+  // Systems
+  private obstacleGenerator!: ObstacleGenerator;
+  
+  // Scoring
+  private score: number = 0;
+  private gears: number = 0;
+  private combo: number = 1;
+  private lastGearTime: number = 0;
+  private maxCombo: number = 1;
+  private totalFlips: number = 0;
+  
+  // Timing
+  private runTime: number = 0;
+  private scrollSpeed: number = CONFIG.BASE_SCROLL_SPEED;
+  
+  // UI
+  private scoreText!: Phaser.GameObjects.Text;
+  private comboText!: Phaser.GameObjects.Text;
+  private timerText!: Phaser.GameObjects.Text;
+  private phaseText!: Phaser.GameObjects.Text;
+  
+  // Collectibles
+  private gearsGroup!: Phaser.Physics.Arcade.Group;
+  
+  // Background layers
+  private bgLayers: Phaser.GameObjects.TileSprite[] = [];
+  
+  // Floor/ceiling
+  private floor!: Phaser.Physics.Arcade.StaticGroup;
+  private ceiling!: Phaser.Physics.Arcade.StaticGroup;
+
+  constructor() {
+    super({ key: 'RunnerScene' });
+  }
+
+  create(): void {
+    const { width, height } = this.cameras.main;
+    
+    // Apply upgrades
+    this.applyUpgrades();
+    
+    // Create background
+    this.createBackground();
+    
+    // Create floor and ceiling
+    this.createBoundaries();
+    
+    // Create player
+    this.createBot();
+    
+    // Initialize systems
+    this.obstacleGenerator = new ObstacleGenerator(this);
+    
+    // Create gear collectibles group
+    this.gearsGroup = this.physics.add.group({ allowGravity: false });
+    
+    // Create UI
+    this.createUI();
+    
+    // Set up collisions
+    this.setupCollisions();
+    
+    // Set up input - ONE BUTTON!
+    this.setupInput();
+    
+    // Start spawning gears
+    this.startGearSpawner();
+    
+    // Camera effects
+    this.cameras.main.fadeIn(300);
+  }
+
+  private applyUpgrades(): void {
+    // Shield upgrade
+    const shieldLevel = progression.getUpgradeLevel('shield');
+    this.shields = UPGRADES.find(u => u.id === 'shield')?.effect(shieldLevel) || 0;
+  }
+
+  private createBackground(): void {
+    const { width, height } = this.cameras.main;
+    
+    // Gradient background
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(
+      COLORS.BG_GRADIENT_TOP, COLORS.BG_GRADIENT_TOP,
+      COLORS.BG_GRADIENT_BOTTOM, COLORS.BG_GRADIENT_BOTTOM
+    );
+    bg.fillRect(0, 0, width, height);
+    
+    // Parallax factory layers (simulated with graphics)
+    for (let i = 0; i < 3; i++) {
+      const layer = this.add.tileSprite(0, height - 100 - i * 80, width * 2, 120, '');
+      layer.setOrigin(0, 1);
+      layer.setAlpha(0.1 + i * 0.1);
+      this.bgLayers.push(layer);
+      
+      // Draw factory silhouettes
+      const graphics = this.add.graphics();
+      graphics.fillStyle(COLORS.DARK_METAL, 0.3 - i * 0.1);
+      for (let x = 0; x < width; x += 100 + Math.random() * 50) {
+        const buildingHeight = 50 + Math.random() * 100;
+        graphics.fillRect(x, height - 60 - buildingHeight, 40 + Math.random() * 40, buildingHeight);
+      }
+    }
+    
+    // Animated gears in background
+    this.createBackgroundGears();
+  }
+
+  private createBackgroundGears(): void {
+    const { width, height } = this.cameras.main;
+    
+    for (let i = 0; i < 5; i++) {
+      const gear = this.add.graphics();
+      const size = 30 + Math.random() * 50;
+      const x = Math.random() * width;
+      const y = Math.random() * (height - 200) + 100;
+      
+      gear.fillStyle(COLORS.STEEL, 0.15);
+      gear.fillCircle(0, 0, size);
+      
+      // Gear teeth
+      for (let t = 0; t < 8; t++) {
+        const angle = (t / 8) * Math.PI * 2;
+        gear.fillRect(
+          Math.cos(angle) * size - 4,
+          Math.sin(angle) * size - 4,
+          8, 8
+        );
+      }
+      
+      gear.fillStyle(COLORS.DARK_METAL, 0.2);
+      gear.fillCircle(0, 0, size * 0.4);
+      
+      gear.setPosition(x, y);
+      
+      // Slow rotation
+      this.tweens.add({
+        targets: gear,
+        angle: i % 2 === 0 ? 360 : -360,
+        duration: 15000 + i * 3000,
+        repeat: -1,
+        ease: 'Linear'
+      });
+    }
+  }
+
+  private createBoundaries(): void {
+    const { width, height } = this.cameras.main;
+    
+    // Floor
+    this.floor = this.physics.add.staticGroup();
+    const floorSprite = this.floor.create(width / 2, height - 30, '') as Phaser.Physics.Arcade.Sprite;
+    floorSprite.setDisplaySize(width, 60);
+    floorSprite.setVisible(false);
+    floorSprite.refreshBody();
+    
+    // Visual floor
+    const floorGraphics = this.add.graphics();
+    floorGraphics.fillStyle(COLORS.STEEL);
+    floorGraphics.fillRect(0, height - 60, width, 60);
+    // Rivets
+    for (let x = 20; x < width; x += 50) {
+      floorGraphics.fillStyle(COLORS.CHROME, 0.5);
+      floorGraphics.fillCircle(x, height - 50, 4);
+      floorGraphics.fillCircle(x, height - 20, 4);
+    }
+    
+    // Ceiling
+    this.ceiling = this.physics.add.staticGroup();
+    const ceilingSprite = this.ceiling.create(width / 2, 30, '') as Phaser.Physics.Arcade.Sprite;
+    ceilingSprite.setDisplaySize(width, 60);
+    ceilingSprite.setVisible(false);
+    ceilingSprite.refreshBody();
+    
+    // Visual ceiling
+    const ceilingGraphics = this.add.graphics();
+    ceilingGraphics.fillStyle(COLORS.STEEL);
+    ceilingGraphics.fillRect(0, 0, width, 60);
+    // Pipes
+    for (let x = 30; x < width; x += 80) {
+      ceilingGraphics.fillStyle(COLORS.RUST, 0.6);
+      ceilingGraphics.fillRect(x, 50, 20, 10);
+    }
+  }
+
+  private createBot(): void {
+    const { height } = this.cameras.main;
+    
+    this.bot = this.physics.add.sprite(CONFIG.BOT_X_POSITION, height - 100, 'pip');
+    this.bot.setCollideWorldBounds(true);
+    this.bot.setBounce(0);
+    this.bot.setGravityY(CONFIG.GRAVITY);
+    this.bot.setMaxVelocity(500, CONFIG.BOT_TERMINAL_VELOCITY);
+    
+    // Cyan glow effect
+    const glow = this.add.graphics();
+    glow.fillStyle(COLORS.NEON_CYAN, 0.3);
+    glow.fillCircle(0, 0, 24);
+    
+    // Update glow position in update()
+    this.bot.setData('glow', glow);
+    
+    // Shield visual if shields > 0
+    if (this.shields > 0) {
+      this.updateShieldVisual();
+    }
+  }
+
+  private updateShieldVisual(): void {
+    if (this.shieldVisual) {
+      this.shieldVisual.destroy();
+    }
+    
+    if (this.shields > 0) {
+      this.shieldVisual = this.add.circle(this.bot.x, this.bot.y, 28, COLORS.NEON_CYAN, 0.2);
+      this.shieldVisual.setStrokeStyle(2, COLORS.NEON_CYAN, 0.6);
+    }
+  }
+
+  private createUI(): void {
+    const { width } = this.cameras.main;
+    
+    // Score (big, prominent)
+    this.scoreText = this.add.text(width / 2, 80, '0', {
+      fontSize: '48px',
+      color: '#00FFFF',
+      fontFamily: 'monospace',
+      stroke: '#000',
+      strokeThickness: 4
+    }).setOrigin(0.5).setDepth(100);
+    
+    // Combo multiplier
+    this.comboText = this.add.text(width / 2, 120, '', {
+      fontSize: '24px',
+      color: '#FF0080',
+      fontFamily: 'monospace'
+    }).setOrigin(0.5).setDepth(100);
+    
+    // Timer
+    this.timerText = this.add.text(20, 70, '00:00', {
+      fontSize: '20px',
+      color: '#FFFFFF',
+      fontFamily: 'monospace'
+    }).setDepth(100);
+    
+    // Phase indicator
+    this.phaseText = this.add.text(width - 20, 70, 'BOOT SEQUENCE', {
+      fontSize: '16px',
+      color: '#39FF14',
+      fontFamily: 'monospace'
+    }).setOrigin(1, 0).setDepth(100);
+    
+    // Gears count
+    this.add.text(20, 95, '⚙️', { fontSize: '20px' }).setDepth(100);
+    this.add.text(45, 95, '0', {
+      fontSize: '20px',
+      color: '#F39C12',
+      fontFamily: 'monospace'
+    }).setDepth(100).setName('gearsText');
+  }
+
+  private setupCollisions(): void {
+    // Bot vs floor/ceiling
+    this.physics.add.collider(this.bot, this.floor);
+    this.physics.add.collider(this.bot, this.ceiling);
+    
+    // Bot vs obstacles
+    this.physics.add.overlap(
+      this.bot,
+      this.obstacleGenerator.getHitboxGroup(),
+      this.hitObstacle,
+      undefined,
+      this
+    );
+    
+    // Bot vs gears
+    this.physics.add.overlap(
+      this.bot,
+      this.gearsGroup,
+      this.collectGear,
+      undefined,
+      this
+    );
+  }
+
+  private setupInput(): void {
+    // Keyboard - Space
+    this.input.keyboard?.on('keydown-SPACE', this.flip, this);
+    
+    // Touch/Click
+    this.input.on('pointerdown', this.flip, this);
+    
+    // Pause on ESC
+    this.input.keyboard?.on('keydown-ESC', () => {
+      this.scene.pause();
+      this.scene.launch('PauseScene', { fromRunner: true });
+    });
+  }
+
+  private flip(): void {
+    if (this.isFlipping) return;
+    
+    this.isFlipping = true;
+    this.isFlipped = !this.isFlipped;
+    this.totalFlips++;
+    
+    // Flip gravity
+    const newGravity = this.isFlipped ? -CONFIG.GRAVITY : CONFIG.GRAVITY;
+    this.bot.setGravityY(newGravity);
+    
+    // Visual flip
+    this.tweens.add({
+      targets: this.bot,
+      scaleY: this.isFlipped ? -1 : 1,
+      duration: CONFIG.FLIP_DURATION,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        this.isFlipping = false;
+      }
+    });
+    
+    // Screen shake
+    if (progression.settings.screenShake) {
+      this.cameras.main.shake(
+        CONFIG.SHAKE_FLIP.duration,
+        CONFIG.SHAKE_FLIP.intensity
+      );
+    }
+    
+    // Particles
+    this.emitFlipParticles();
+    
+    // Sound
+    soundManager.playFlip();
+  }
+
+  private emitFlipParticles(): void {
+    if (!progression.settings.particles) return;
+    
+    for (let i = 0; i < 8; i++) {
+      const particle = this.add.circle(
+        this.bot.x + Phaser.Math.Between(-20, 20),
+        this.bot.y + Phaser.Math.Between(-20, 20),
+        Phaser.Math.Between(2, 5),
+        COLORS.NEON_CYAN
+      );
+      
+      this.tweens.add({
+        targets: particle,
+        alpha: 0,
+        scale: 0,
+        x: particle.x + Phaser.Math.Between(-50, 50),
+        y: particle.y + Phaser.Math.Between(-50, 50),
+        duration: 300,
+        onComplete: () => particle.destroy()
+      });
+    }
+  }
+
+  private startGearSpawner(): void {
+    // Spawn gears periodically
+    this.time.addEvent({
+      delay: 2000,
+      callback: this.spawnGear,
+      callbackScope: this,
+      loop: true
+    });
+  }
+
+  private spawnGear(): void {
+    const { width, height } = this.cameras.main;
+    const y = Phaser.Math.Between(100, height - 100);
+    
+    const gear = this.gearsGroup.create(width + 50, y, 'coin') as Phaser.Physics.Arcade.Sprite;
+    (gear.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+    gear.setVelocityX(-this.scrollSpeed);
+    
+    // Spin animation
+    this.tweens.add({
+      targets: gear,
+      angle: 360,
+      duration: 1000,
+      repeat: -1,
+      ease: 'Linear'
+    });
+  }
+
+  private collectGear(
+    _bot: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody | Phaser.Tilemaps.Tile,
+    gear: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody | Phaser.Tilemaps.Tile
+  ): void {
+    const gearSprite = gear as Phaser.Physics.Arcade.Sprite;
+    
+    // Update combo
+    const now = Date.now();
+    const comboExtend = progression.getUpgradeLevel('comboExtend');
+    const comboDecay = CONFIG.COMBO_DECAY_TIME * (1 + (UPGRADES.find(u => u.id === 'comboExtend')?.effect(comboExtend) || 0) / 100);
+    
+    if (now - this.lastGearTime < comboDecay) {
+      this.combo = Math.min(this.combo + 1, CONFIG.COMBO_MULTIPLIER_MAX);
+    } else {
+      this.combo = 1;
+    }
+    this.lastGearTime = now;
+    this.maxCombo = Math.max(this.maxCombo, this.combo);
+    
+    // Add score with combo
+    const doublePoints = progression.getUpgradeLevel('doublePoints');
+    const pointsMult = 1 + (UPGRADES.find(u => u.id === 'doublePoints')?.effect(doublePoints) || 0) / 100;
+    const points = Math.floor(CONFIG.POINTS_PER_GEAR * this.combo * pointsMult);
+    this.score += points;
+    this.gears++;
+    
+    // Update UI
+    this.updateUI();
+    
+    // Score popup
+    this.showScorePopup(gearSprite.x, gearSprite.y, points);
+    
+    // Effects
+    soundManager.playCoinCollect();
+    if (progression.settings.screenShake) {
+      this.cameras.main.shake(CONFIG.SHAKE_GEAR.duration, CONFIG.SHAKE_GEAR.intensity);
+    }
+    
+    gearSprite.destroy();
+  }
+
+  private showScorePopup(x: number, y: number, points: number): void {
+    const color = this.combo >= 5 ? '#FF0080' : this.combo >= 3 ? '#FFD700' : '#FFFFFF';
+    
+    const popup = this.add.text(x, y, `+${points}`, {
+      fontSize: this.combo >= 5 ? '28px' : '20px',
+      color: color,
+      fontFamily: 'monospace',
+      stroke: '#000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    this.tweens.add({
+      targets: popup,
+      y: y - 60,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => popup.destroy()
+    });
+  }
+
+  private hitObstacle(): void {
+    // Check for shield
+    if (this.shields > 0) {
+      this.shields--;
+      this.updateShieldVisual();
+      
+      // Shield break effect
+      this.cameras.main.flash(200, 0, 255, 255);
+      soundManager.playFlip();
+      
+      // Brief invulnerability
+      this.bot.setAlpha(0.5);
+      this.time.delayedCall(500, () => {
+        this.bot.setAlpha(1);
+      });
+      
+      return;
+    }
+    
+    // Death!
+    this.gameOver();
+  }
+
+  private gameOver(): void {
+    // Stop physics
+    this.physics.pause();
+    
+    // Death effects
+    soundManager.playDeath();
+    this.cameras.main.shake(CONFIG.SHAKE_DEATH.duration, CONFIG.SHAKE_DEATH.intensity);
+    this.cameras.main.flash(300, 255, 0, 0);
+    
+    // Record run
+    progression.recordRun(
+      this.score,
+      this.runTime,
+      this.gears,
+      this.totalFlips,
+      this.maxCombo
+    );
+    
+    // Show game over after brief delay
+    this.time.delayedCall(500, () => {
+      this.scene.start('GameOverScene', {
+        score: this.score,
+        gears: this.gears,
+        time: this.runTime,
+        maxCombo: this.maxCombo,
+        isNewBest: this.score > (progression.stats.bestScore - this.score)
+      });
+    });
+  }
+
+  update(time: number, delta: number): void {
+    if (!this.bot || !this.bot.active) return;
+    
+    // Update run time
+    this.runTime += delta / 1000;
+    
+    // Update scroll speed (gradually increases)
+    const speedMult = this.obstacleGenerator.getScrollSpeedMultiplier();
+    this.scrollSpeed = Math.min(
+      CONFIG.BASE_SCROLL_SPEED * speedMult + (this.runTime * CONFIG.SPEED_INCREASE_RATE),
+      CONFIG.MAX_SCROLL_SPEED
+    );
+    
+    // Update obstacle generator
+    this.obstacleGenerator.update(delta, this.scrollSpeed);
+    
+    // Update gear velocities
+    this.gearsGroup.getChildren().forEach(child => {
+      const gear = child as Phaser.Physics.Arcade.Sprite;
+      gear.setVelocityX(-this.scrollSpeed);
+      
+      // Cleanup off-screen gears
+      if (gear.x < -50) {
+        gear.destroy();
+      }
+    });
+    
+    // Update glow position
+    const glow = this.bot.getData('glow') as Phaser.GameObjects.Graphics;
+    if (glow) {
+      glow.setPosition(this.bot.x, this.bot.y);
+    }
+    
+    // Update shield position
+    if (this.shieldVisual) {
+      this.shieldVisual.setPosition(this.bot.x, this.bot.y);
+    }
+    
+    // Update score from time
+    const doublePoints = progression.getUpgradeLevel('doublePoints');
+    const pointsMult = 1 + (UPGRADES.find(u => u.id === 'doublePoints')?.effect(doublePoints) || 0) / 100;
+    this.score += Math.floor(CONFIG.POINTS_PER_SECOND * (delta / 1000) * pointsMult);
+    
+    // Check combo decay
+    if (Date.now() - this.lastGearTime > CONFIG.COMBO_DECAY_TIME && this.combo > 1) {
+      this.combo = 1;
+    }
+    
+    // Update UI
+    this.updateUI();
+    
+    // Parallax scrolling
+    this.bgLayers.forEach((layer, i) => {
+      layer.tilePositionX += this.scrollSpeed * (0.1 + i * 0.1) * (delta / 1000);
+    });
+  }
+
+  private updateUI(): void {
+    this.scoreText.setText(this.score.toString());
+    
+    // Combo display
+    if (this.combo > 1) {
+      this.comboText.setText(`${this.combo}x COMBO`);
+      this.comboText.setVisible(true);
+    } else {
+      this.comboText.setVisible(false);
+    }
+    
+    // Timer
+    const mins = Math.floor(this.runTime / 60);
+    const secs = Math.floor(this.runTime % 60);
+    this.timerText.setText(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
+    
+    // Phase
+    this.phaseText.setText(this.obstacleGenerator.getCurrentPhaseName());
+    
+    // Gears
+    const gearsText = this.children.getByName('gearsText') as Phaser.GameObjects.Text;
+    if (gearsText) {
+      gearsText.setText(this.gears.toString());
+    }
+  }
+}

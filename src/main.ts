@@ -2,49 +2,65 @@ import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { MenuScene } from './scenes/MenuScene';
-import { GameScene } from './scenes/GameScene';
-import { VictoryScene } from './scenes/VictoryScene';
+import { RunnerScene } from './scenes/RunnerScene';
+import { GameOverScene } from './scenes/GameOverScene';
+import { UpgradeScene } from './scenes/UpgradeScene';
 import { PauseScene } from './scenes/PauseScene';
 
-// Game configuration - Higher resolution, fullscreen responsive
+// ===========================================
+// FLIP BOT - Factory Escape Roguelike
+// Gamedev.js Jam 2026 - Theme: MACHINES
+// ===========================================
+// 
+// ONE BUTTON GAME - Tap/Space to flip gravity
+// Survive the malfunctioning factory as long as you can!
+// Collect gears, unlock upgrades, beat your high score!
+//
+// ===========================================
+
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 1280,
-  height: 720,
+  width: 800,
+  height: 600,
   parent: 'game-container',
-  backgroundColor: '#1a1a2e', // Dark industrial
+  backgroundColor: '#0D0D1A',
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { x: 0, y: 800 },
+      gravity: { x: 0, y: 0 }, // Managed per-object
       debug: false
     }
   },
   scale: {
-    mode: Phaser.Scale.RESIZE, // Responsive - fills entire screen
+    mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: '100%',
-    height: '100%',
     min: {
-      width: 800,
-      height: 600
+      width: 400,
+      height: 300
     },
     max: {
-      width: 1920,
-      height: 1080
+      width: 1600,
+      height: 1200
     }
   },
   pixelArt: true,
-  scene: [BootScene, PreloadScene, MenuScene, GameScene, PauseScene, VictoryScene]
+  scene: [
+    BootScene,
+    PreloadScene,
+    MenuScene,
+    RunnerScene,
+    GameOverScene,
+    UpgradeScene,
+    PauseScene
+  ]
 };
 
-// Create the game instance
+// Create game instance
 const game = new Phaser.Game(config);
 
-// Handle window resize for responsive design
+// Responsive resize
 window.addEventListener('resize', () => {
   game.scale.resize(window.innerWidth, window.innerHeight);
 });
 
-// Export for potential external access
 export default game;
