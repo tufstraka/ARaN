@@ -88,17 +88,20 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private createTitle(): void {
-    const { width } = this.cameras.main;
+    const { width, height } = this.cameras.main;
+    const isMobile = width < 600;
+    const scale = isMobile ? 0.75 : 1;
     
     // Robot icon with glow
-    const robot = this.add.text(width / 2, 70, '🤖', {
-      fontSize: '72px'
+    const robotY = isMobile ? 50 : 70;
+    const robot = this.add.text(width / 2, robotY, '🤖', {
+      fontSize: isMobile ? '48px' : '72px'
     }).setOrigin(0.5);
     
     // Subtle bounce
     this.tweens.add({
       targets: robot,
-      y: 65,
+      y: robotY - 5,
       duration: 800,
       yoyo: true,
       repeat: -1,
@@ -106,12 +109,13 @@ export class MenuScene extends Phaser.Scene {
     });
     
     // Title - ARAN in stylized text
-    const title = this.add.text(width / 2, 155, 'ARAN', {
-      fontSize: '72px',
+    const titleY = isMobile ? 105 : 155;
+    const title = this.add.text(width / 2, titleY, 'ARAN', {
+      fontSize: isMobile ? '48px' : '72px',
       color: '#00FFFF',
       fontFamily: 'monospace',
       stroke: '#003333',
-      strokeThickness: 8
+      strokeThickness: isMobile ? 5 : 8
     }).setOrigin(0.5);
     
     // Glow pulse
@@ -125,157 +129,209 @@ export class MenuScene extends Phaser.Scene {
     });
     
     // Subtitle
-    this.add.text(width / 2, 205, 'FACTORY ESCAPE', {
-      fontSize: '16px',
+    const subY = isMobile ? 145 : 205;
+    this.add.text(width / 2, subY, 'FACTORY ESCAPE', {
+      fontSize: isMobile ? '12px' : '16px',
       color: '#FF0080',
       fontFamily: 'monospace',
-      letterSpacing: 6
+      letterSpacing: isMobile ? 3 : 6
     }).setOrigin(0.5);
     
-    // Theme badge
-    const badge = this.add.text(width / 2, 235, '⚙️ GAMEDEV.JS JAM 2026 • MACHINES ⚙️', {
-      fontSize: '10px',
-      color: '#555',
-      fontFamily: 'monospace'
-    }).setOrigin(0.5);
+    // Theme badge - hide on very small screens
+    if (!isMobile || height > 450) {
+      const badgeY = isMobile ? 170 : 235;
+      this.add.text(width / 2, badgeY, '⚙️ GAMEDEV.JS JAM 2026 • MACHINES ⚙️', {
+        fontSize: isMobile ? '8px' : '10px',
+        color: '#555',
+        fontFamily: 'monospace'
+      }).setOrigin(0.5);
+    }
   }
 
   private createStatsDisplay(): void {
-    const { width } = this.cameras.main;
+    const { width, height } = this.cameras.main;
     const stats = progression.stats;
+    const isMobile = width < 600;
     
-    const panelY = 260;
+    // Hide stats panel on very small screens
+    if (isMobile && height < 500) return;
+    
+    const panelY = isMobile ? 190 : 260;
+    const panelWidth = isMobile ? Math.min(width - 40, 280) : 300;
+    const panelHeight = isMobile ? 60 : 80;
     
     // Stats panel
     const panel = this.add.graphics();
     panel.fillStyle(0x1a1a2e, 0.7);
-    panel.fillRoundedRect(width / 2 - 150, panelY, 300, 80, 8);
+    panel.fillRoundedRect(width / 2 - panelWidth / 2, panelY, panelWidth, panelHeight, 8);
+    
+    const fontSize = isMobile ? '10px' : '12px';
+    const valueSize = isMobile ? '18px' : '24px';
+    const spacing = panelWidth / 3;
+    const startX = width / 2 - spacing;
+    const labelY = panelY + (isMobile ? 10 : 15);
+    const valueY = panelY + (isMobile ? 25 : 32);
     
     // Best score
-    this.add.text(width / 2 - 130, panelY + 15, 'BEST', {
-      fontSize: '12px',
+    this.add.text(startX, labelY, 'BEST', {
+      fontSize,
       color: '#666',
       fontFamily: 'monospace'
-    });
-    this.add.text(width / 2 - 130, panelY + 32, stats.bestScore.toString(), {
-      fontSize: '24px',
+    }).setOrigin(0.5, 0);
+    this.add.text(startX, valueY, stats.bestScore.toString(), {
+      fontSize: valueSize,
       color: '#00FFFF',
       fontFamily: 'monospace'
-    });
+    }).setOrigin(0.5, 0);
     
     // Total runs
-    this.add.text(width / 2, panelY + 15, 'RUNS', {
-      fontSize: '12px',
+    this.add.text(width / 2, labelY, 'RUNS', {
+      fontSize,
       color: '#666',
       fontFamily: 'monospace'
-    });
-    this.add.text(width / 2, panelY + 32, stats.totalRuns.toString(), {
-      fontSize: '24px',
+    }).setOrigin(0.5, 0);
+    this.add.text(width / 2, valueY, stats.totalRuns.toString(), {
+      fontSize: valueSize,
       color: '#FFFFFF',
       fontFamily: 'monospace'
-    });
+    }).setOrigin(0.5, 0);
     
     // Currency
-    this.add.text(width / 2 + 100, panelY + 15, 'GEARS', {
-      fontSize: '12px',
+    this.add.text(startX + spacing * 2, labelY, 'GEARS', {
+      fontSize,
       color: '#666',
       fontFamily: 'monospace'
-    });
-    this.add.text(width / 2 + 100, panelY + 32, `⚙️ ${progression.currency}`, {
-      fontSize: '20px',
+    }).setOrigin(0.5, 0);
+    this.add.text(startX + spacing * 2, valueY, `⚙️ ${progression.currency}`, {
+      fontSize: isMobile ? '14px' : '20px',
       color: '#F39C12',
       fontFamily: 'monospace'
-    });
+    }).setOrigin(0.5, 0);
   }
 
   private createButtons(): void {
     const { width, height } = this.cameras.main;
-    const buttonY = 380;
+    const isMobile = width < 600;
+    const buttonY = isMobile ? Math.min(height * 0.55, 350) : 380;
     
-    // PLAY button (main)
-    this.createMainButton(width / 2, buttonY, 'PLAY', COLORS.NEON_CYAN, () => {
+    // PLAY button (main) - bigger on mobile
+    const playBtnWidth = isMobile ? Math.min(width * 0.7, 280) : 200;
+    const playBtnHeight = isMobile ? 60 : 50;
+    
+    this.createMainButton(width / 2, buttonY, '▶  PLAY', COLORS.NEON_CYAN, playBtnWidth, playBtnHeight, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.time.delayedCall(300, () => {
         this.scene.start('RunnerScene');
       });
     });
     
-    // Secondary buttons
-    const secondaryY = buttonY + 70;
+    // Secondary buttons - stack vertically on mobile
+    const secondaryY = buttonY + (isMobile ? 80 : 70);
+    const secondaryBtnWidth = isMobile ? Math.min(width * 0.42, 160) : 120;
+    const secondaryBtnHeight = isMobile ? 50 : 40;
+    const secondarySpacing = isMobile ? Math.min(width * 0.25, 90) : 100;
     
-    this.createSecondaryButton(width / 2 - 100, secondaryY, '⚡ UPGRADES', () => {
+    this.createSecondaryButton(width / 2 - secondarySpacing, secondaryY, '⚡ UPGRADES', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.scene.start('UpgradeScene');
     });
     
-    this.createSecondaryButton(width / 2 + 100, secondaryY, '🏆 STATS', () => {
+    this.createSecondaryButton(width / 2 + secondarySpacing, secondaryY, '🏆 STATS', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.showStatsModal();
     });
     
-    // How to play
-    this.add.text(width / 2, secondaryY + 60, 'TAP or SPACE to flip gravity', {
-      fontSize: '14px',
-      color: '#666',
+    // How to play - adjust for mobile
+    const instructY = secondaryY + (isMobile ? 70 : 60);
+    const instructSize = isMobile ? '16px' : '14px';
+    
+    this.add.text(width / 2, instructY, 'TAP or SPACE to flip gravity', {
+      fontSize: instructSize,
+      color: '#888',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
     
-    this.add.text(width / 2, secondaryY + 80, 'Survive as long as you can!', {
-      fontSize: '12px',
-      color: '#444',
-      fontFamily: 'monospace'
-    }).setOrigin(0.5);
+    if (!isMobile || height > 500) {
+      this.add.text(width / 2, instructY + 25, 'Survive as long as you can!', {
+        fontSize: '12px',
+        color: '#555',
+        fontFamily: 'monospace'
+      }).setOrigin(0.5);
+    }
   }
 
-  private createMainButton(x: number, y: number, text: string, color: number, callback: () => void): void {
-    const width = 200;
-    const height = 50;
-    
+  private createMainButton(x: number, y: number, text: string, color: number, btnWidth: number, btnHeight: number, callback: () => void): void {
     const btn = this.add.graphics();
     btn.fillStyle(color, 0.3);
-    btn.fillRoundedRect(-width / 2, -height / 2, width, height, 12);
+    btn.fillRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12);
     btn.lineStyle(3, color, 0.8);
-    btn.strokeRoundedRect(-width / 2, -height / 2, width, height, 12);
+    btn.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12);
     btn.setPosition(x, y);
     
+    const fontSize = btnHeight > 55 ? '32px' : '28px';
     const label = this.add.text(x, y, text, {
-      fontSize: '28px',
+      fontSize,
       color: '#FFFFFF',
       fontFamily: 'monospace'
     }).setOrigin(0.5);
     
-    const hitArea = this.add.rectangle(x, y, width, height, 0x000000, 0);
+    const hitArea = this.add.rectangle(x, y, btnWidth + 20, btnHeight + 20, 0x000000, 0);
     hitArea.setInteractive({ useHandCursor: true });
     
     hitArea.on('pointerover', () => {
       btn.clear();
       btn.fillStyle(color, 0.5);
-      btn.fillRoundedRect(-width / 2, -height / 2, width, height, 12);
+      btn.fillRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12);
       btn.lineStyle(3, color, 1);
-      btn.strokeRoundedRect(-width / 2, -height / 2, width, height, 12);
+      btn.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12);
       label.setScale(1.05);
     });
     
     hitArea.on('pointerout', () => {
       btn.clear();
       btn.fillStyle(color, 0.3);
-      btn.fillRoundedRect(-width / 2, -height / 2, width, height, 12);
+      btn.fillRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12);
       btn.lineStyle(3, color, 0.8);
-      btn.strokeRoundedRect(-width / 2, -height / 2, width, height, 12);
+      btn.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12);
       label.setScale(1);
     });
     
     hitArea.on('pointerdown', callback);
   }
 
-  private createSecondaryButton(x: number, y: number, text: string, callback: () => void): void {
-    const btn = this.add.text(x, y, text, {
-      fontSize: '16px',
-      color: '#888',
-      fontFamily: 'monospace'
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+  private createSecondaryButton(x: number, y: number, text: string, btnWidth: number, btnHeight: number, callback: () => void): void {
+    const bg = this.add.graphics();
+    bg.fillStyle(0x333344, 0.5);
+    bg.fillRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 8);
+    bg.lineStyle(2, 0x555566, 0.6);
+    bg.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 8);
+    bg.setPosition(x, y);
     
-    btn.on('pointerover', () => btn.setColor('#FFF'));
-    btn.on('pointerout', () => btn.setColor('#888'));
-    btn.on('pointerdown', callback);
+    const fontSize = btnHeight > 45 ? '16px' : '14px';
+    const btn = this.add.text(x, y, text, {
+      fontSize,
+      color: '#AAA',
+      fontFamily: 'monospace'
+    }).setOrigin(0.5);
+    
+    const hitArea = this.add.rectangle(x, y, btnWidth + 10, btnHeight + 10, 0x000000, 0);
+    hitArea.setInteractive({ useHandCursor: true });
+    
+    hitArea.on('pointerover', () => {
+      btn.setColor('#FFF');
+      bg.clear();
+      bg.fillStyle(0x444455, 0.7);
+      bg.fillRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 8);
+      bg.lineStyle(2, 0x00FFFF, 0.6);
+      bg.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 8);
+    });
+    hitArea.on('pointerout', () => {
+      btn.setColor('#AAA');
+      bg.clear();
+      bg.fillStyle(0x333344, 0.5);
+      bg.fillRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 8);
+      bg.lineStyle(2, 0x555566, 0.6);
+      bg.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 8);
+    });
+    hitArea.on('pointerdown', callback);
   }
 
   private showStatsModal(): void {

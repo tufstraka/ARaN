@@ -114,6 +114,12 @@ export class RunnerScene extends Phaser.Scene {
     this.ceiling?.clear(true, true);
     this.createBoundaries();
     
+    // Reposition bot to 15% from left
+    if (this.bot) {
+      const newX = Math.max(100, gameSize.width * 0.15);
+      this.bot.setX(newX);
+    }
+    
     // Update UI positions
     this.updateUIPositions();
   }
@@ -279,9 +285,12 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   private createBot(): void {
-    const { height } = this.cameras.main;
+    const { width, height } = this.cameras.main;
     
-    this.bot = this.physics.add.sprite(CONFIG.BOT_X_POSITION, height - 100, 'pip');
+    // Position robot at 15% from left edge (responsive)
+    const botX = Math.max(100, width * 0.15);
+    
+    this.bot = this.physics.add.sprite(botX, height - 100, 'pip');
     this.bot.setScale(1.0); // Robot is now 48x48 with full body
     this.bot.setCollideWorldBounds(true);
     this.bot.setBounce(0);
