@@ -246,7 +246,7 @@ export class MenuScene extends Phaser.Scene {
     this.createModernButton(width / 2, height * 0.85);
 
     // Footer info
-    const footer = this.add.text(width / 2, height - 25, 'GAMEDEV.JS JAM 2026', {
+    const _footer = this.add.text(width / 2, height - 25, 'GAMEDEV.JS JAM 2026', {
       fontSize: '11px',
       color: '#374151',
       fontFamily: 'Arial',
@@ -385,7 +385,7 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  update(time: number, delta: number): void {
+  update(_time: number, delta: number): void {
     this.time_elapsed += delta;
   }
 }

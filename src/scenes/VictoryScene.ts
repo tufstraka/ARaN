@@ -58,7 +58,7 @@ export class VictoryScene extends Phaser.Scene {
     });
 
     // Victory title
-    const title = this.add.text(width / 2, panelY + 140, 'MISSION COMPLETE', {
+    const _title = this.add.text(width / 2, panelY + 140, 'MISSION COMPLETE', {
       fontSize: '32px',
       color: '#ffffff',
       fontFamily: 'Arial',
