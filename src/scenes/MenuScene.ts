@@ -294,34 +294,35 @@ export class MenuScene extends Phaser.Scene {
     const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.85).setOrigin(0);
     overlay.setInteractive();
     
-    // Modal - larger for more stats
-    const modalHeight = 420;
+    // Modal - LARGER to fit all content
+    const modalWidth = 420;
+    const modalHeight = 560;
     const modal = this.add.graphics();
     modal.fillStyle(0x0a0a15, 0.98);
-    modal.fillRoundedRect(width / 2 - 190, height / 2 - modalHeight/2, 380, modalHeight, 16);
+    modal.fillRoundedRect(width / 2 - modalWidth/2, height / 2 - modalHeight/2, modalWidth, modalHeight, 16);
     modal.lineStyle(2, COLORS.NEON_CYAN, 0.4);
-    modal.strokeRoundedRect(width / 2 - 190, height / 2 - modalHeight/2, 380, modalHeight, 16);
+    modal.strokeRoundedRect(width / 2 - modalWidth/2, height / 2 - modalHeight/2, modalWidth, modalHeight, 16);
     
     // Title
     this.add.text(width / 2, height / 2 - modalHeight/2 + 30, 'AR-4N STATUS REPORT', {
-      fontSize: '18px',
+      fontSize: '20px',
       color: '#00FFFF',
       fontFamily: TITLE_FONT,
       fontStyle: 'bold'
     }).setOrigin(0.5).setName('modal');
     
     // Subtitle
-    this.add.text(width / 2, height / 2 - modalHeight/2 + 52, 'Escape Attempt Data', {
-      fontSize: '10px',
+    this.add.text(width / 2, height / 2 - modalHeight/2 + 55, 'Escape Attempt Data', {
+      fontSize: '11px',
       color: '#666',
       fontFamily: BODY_FONT
     }).setOrigin(0.5).setName('modal');
     
     // Calculate derived stats
     const avgScore = stats.totalRuns > 0 ? Math.floor(stats.totalScore / stats.totalRuns) : 0;
-    const avgTime = stats.totalRuns > 0 ? stats.totalTimePlayed / stats.totalRuns : 0;
+    const avgTime = stats.totalRuns > 0 ? (stats.totalTimePlayed || 0) / stats.totalRuns : 0;
     const totalMinutes = Math.floor((stats.totalTimePlayed || 0) / 60);
-    const deathsPerMin = stats.totalTimePlayed > 60 ? (stats.totalDeaths / (stats.totalTimePlayed / 60)).toFixed(1) : '—';
+    const deathsPerMin = (stats.totalTimePlayed || 0) > 60 ? (stats.totalDeaths / ((stats.totalTimePlayed || 1) / 60)).toFixed(1) : '—';
     const gearsPerRun = stats.totalRuns > 0 ? (stats.totalGears / stats.totalRuns).toFixed(1) : '0';
     
     // Find highest phase reached
@@ -336,12 +337,13 @@ export class MenuScene extends Phaser.Scene {
       }
     }
     
-    // Stats list - more interesting grouping
-    const startY = height / 2 - modalHeight/2 + 75;
+    const leftX = width / 2 - modalWidth/2 + 30;
+    const rightX = width / 2 + modalWidth/2 - 30;
+    const startY = height / 2 - modalHeight/2 + 80;
     
     // Section: Performance
-    this.add.text(width / 2 - 160, startY, '[ PERFORMANCE ]', {
-      fontSize: '9px',
+    this.add.text(leftX, startY, '[ PERFORMANCE ]', {
+      fontSize: '10px',
       color: '#00FFFF',
       fontFamily: BODY_FONT
     }).setName('modal');
@@ -354,14 +356,14 @@ export class MenuScene extends Phaser.Scene {
     ];
     
     perfStats.forEach(([label, value], i) => {
-      this.add.text(width / 2 - 150, startY + 18 + i * 26, label, {
-        fontSize: '12px',
+      this.add.text(leftX + 10, startY + 20 + i * 28, label, {
+        fontSize: '13px',
         color: '#888',
         fontFamily: BODY_FONT
       }).setName('modal');
       
-      this.add.text(width / 2 + 160, startY + 18 + i * 26, value, {
-        fontSize: '13px',
+      this.add.text(rightX, startY + 20 + i * 28, value, {
+        fontSize: '14px',
         color: '#FFF',
         fontFamily: BODY_FONT,
         fontStyle: 'bold'
@@ -369,9 +371,9 @@ export class MenuScene extends Phaser.Scene {
     });
     
     // Section: Totals
-    const section2Y = startY + 125;
-    this.add.text(width / 2 - 160, section2Y, '[ TOTALS ]', {
-      fontSize: '9px',
+    const section2Y = startY + 135;
+    this.add.text(leftX, section2Y, '[ TOTALS ]', {
+      fontSize: '10px',
       color: '#FF6B4A',
       fontFamily: BODY_FONT
     }).setName('modal');
@@ -385,14 +387,14 @@ export class MenuScene extends Phaser.Scene {
     ];
     
     totalStats.forEach(([label, value], i) => {
-      this.add.text(width / 2 - 150, section2Y + 18 + i * 26, label, {
-        fontSize: '12px',
+      this.add.text(leftX + 10, section2Y + 20 + i * 26, label, {
+        fontSize: '13px',
         color: '#888',
         fontFamily: BODY_FONT
       }).setName('modal');
       
-      this.add.text(width / 2 + 160, section2Y + 18 + i * 26, value, {
-        fontSize: '13px',
+      this.add.text(rightX, section2Y + 20 + i * 26, value, {
+        fontSize: '14px',
         color: '#FFF',
         fontFamily: BODY_FONT,
         fontStyle: 'bold'
@@ -400,9 +402,9 @@ export class MenuScene extends Phaser.Scene {
     });
     
     // Section: Averages
-    const section3Y = section2Y + 150;
-    this.add.text(width / 2 - 160, section3Y, '[ AVERAGES ]', {
-      fontSize: '9px',
+    const section3Y = section2Y + 155;
+    this.add.text(leftX, section3Y, '[ AVERAGES ]', {
+      fontSize: '10px',
       color: '#44FF44',
       fontFamily: BODY_FONT
     }).setName('modal');
@@ -415,22 +417,89 @@ export class MenuScene extends Phaser.Scene {
     ];
     
     avgStats.forEach(([label, value], i) => {
-      this.add.text(width / 2 - 150, section3Y + 18 + i * 26, label, {
-        fontSize: '12px',
+      this.add.text(leftX + 10, section3Y + 20 + i * 26, label, {
+        fontSize: '13px',
         color: '#888',
         fontFamily: BODY_FONT
       }).setName('modal');
       
-      this.add.text(width / 2 + 160, section3Y + 18 + i * 26, value, {
-        fontSize: '13px',
+      this.add.text(rightX, section3Y + 20 + i * 26, value, {
+        fontSize: '14px',
         color: '#FFF',
         fontFamily: BODY_FONT,
         fontStyle: 'bold'
       }).setOrigin(1, 0).setName('modal');
     });
     
+    // Blockchain submit button (if wallet available)
+    if (web3Manager.isAvailable()) {
+      const blockchainY = section3Y + 135;
+      
+      // Divider line
+      const divider = this.add.graphics();
+      divider.lineStyle(1, 0x333355, 0.5);
+      divider.lineBetween(leftX, blockchainY - 10, rightX, blockchainY - 10);
+      divider.setName('modal');
+      
+      // Blockchain section
+      const bcBtnBg = this.add.graphics();
+      bcBtnBg.fillStyle(0x9945ff, 0.3);
+      bcBtnBg.fillRoundedRect(width/2 - 150, blockchainY, 300, 45, 8);
+      bcBtnBg.lineStyle(2, 0x9945ff, 0.8);
+      bcBtnBg.strokeRoundedRect(width/2 - 150, blockchainY, 300, 45, 8);
+      bcBtnBg.setName('modal');
+      
+      const bcBtnText = this.add.text(width/2, blockchainY + 22, web3Manager.isConnected() 
+        ? '⛓️  SUBMIT TO BLOCKCHAIN' 
+        : '🔗  CONNECT WALLET TO SUBMIT', {
+        fontSize: '13px',
+        color: '#ffffff',
+        fontFamily: BODY_FONT,
+        fontStyle: 'bold'
+      }).setOrigin(0.5).setName('modal');
+      
+      const bcHitArea = this.add.rectangle(width/2, blockchainY + 22, 300, 45, 0x000000, 0);
+      bcHitArea.setInteractive({ useHandCursor: true }).setName('modal');
+      
+      bcHitArea.on('pointerover', () => {
+        bcBtnBg.clear();
+        bcBtnBg.fillStyle(0x9945ff, 0.5);
+        bcBtnBg.fillRoundedRect(width/2 - 150, blockchainY, 300, 45, 8);
+        bcBtnBg.lineStyle(2, 0x9945ff, 1);
+        bcBtnBg.strokeRoundedRect(width/2 - 150, blockchainY, 300, 45, 8);
+      });
+      
+      bcHitArea.on('pointerout', () => {
+        bcBtnBg.clear();
+        bcBtnBg.fillStyle(0x9945ff, 0.3);
+        bcBtnBg.fillRoundedRect(width/2 - 150, blockchainY, 300, 45, 8);
+        bcBtnBg.lineStyle(2, 0x9945ff, 0.8);
+        bcBtnBg.strokeRoundedRect(width/2 - 150, blockchainY, 300, 45, 8);
+      });
+      
+      bcHitArea.on('pointerdown', async () => {
+        if (!web3Manager.isConnected()) {
+          // Connect first
+          bcBtnText.setText('⏳ Connecting...');
+          await web3Manager.connect();
+          if (web3Manager.isConnected()) {
+            bcBtnText.setText('⛓️  SUBMIT TO BLOCKCHAIN');
+          } else {
+            bcBtnText.setText('🔗  CONNECT WALLET TO SUBMIT');
+          }
+        } else {
+          // Submit score
+          if (stats.bestScore > 0) {
+            bcBtnText.setText('⏳ Submitting...');
+            await web3Manager.submitScore(stats.bestScore);
+            bcBtnText.setText('✅ Score Submitted!');
+          }
+        }
+      });
+    }
+    
     // Close button
-    const closeBtn = this.add.text(width / 2, height / 2 + modalHeight/2 - 30, '[ CLOSE ]', {
+    const closeBtn = this.add.text(width / 2, height / 2 + modalHeight/2 - 25, '[ CLOSE ]', {
       fontSize: '14px',
       color: '#666',
       fontFamily: BODY_FONT
@@ -439,7 +508,6 @@ export class MenuScene extends Phaser.Scene {
     closeBtn.on('pointerover', () => closeBtn.setColor('#FFF'));
     closeBtn.on('pointerout', () => closeBtn.setColor('#666'));
     closeBtn.on('pointerdown', () => {
-      // Destroy modal elements
       this.children.list
         .filter(child => child.name === 'modal')
         .forEach(child => child.destroy());
