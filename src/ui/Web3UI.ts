@@ -48,23 +48,24 @@ export class Web3UI {
     const container = this.scene.add.container(x, y);
     
     const isConnected = web3Manager.isConnected();
-    const btnWidth = 140;
-    const btnHeight = 36;
+    const btnWidth = 160;
+    const btnHeight = 42;
     
-    // Background
+    // Background - more visible
     const bg = this.scene.add.graphics();
     this.drawWalletButton(bg, btnWidth, btnHeight, isConnected, false);
     container.add(bg);
     
     // Icon
-    const icon = this.scene.add.text(-btnWidth/2 + 15, 0, isConnected ? '🔗' : '🔌', {
-      fontSize: '16px'
+    const icon = this.scene.add.text(-btnWidth/2 + 15, 0, isConnected ? '⛓️' : '🔗', {
+      fontSize: '18px'
     }).setOrigin(0, 0.5);
     container.add(icon);
     
-    // Text
-    const text = this.scene.add.text(5, 0, isConnected ? web3Manager.getShortAddress() : 'Connect', {
-      fontSize: '12px',
+    // Text - clearer label
+    const buttonLabel = isConnected ? web3Manager.getShortAddress() : 'BLOCKCHAIN';
+    const text = this.scene.add.text(10, 0, buttonLabel, {
+      fontSize: '13px',
       color: '#ffffff',
       fontFamily: BODY_FONT,
       fontStyle: 'bold'
@@ -100,11 +101,8 @@ export class Web3UI {
     });
     
     hitArea.on('pointerdown', async () => {
-      if (isConnected) {
-        this.showWalletModal();
-      } else {
-        await this.connectWallet(text, icon, bg, btnWidth, btnHeight);
-      }
+      // Always show wallet modal - it handles connect + actions
+      this.showWalletModal();
     });
     
     return container;
@@ -114,18 +112,19 @@ export class Web3UI {
     g.clear();
     
     const baseColor = connected ? 0x00aa44 : 0x9945ff;
-    const alpha = hover ? 0.9 : 0.7;
+    const alpha = hover ? 1 : 0.85;
     
-    // Gradient-like effect
-    g.fillStyle(baseColor, alpha * 0.3);
-    g.fillRoundedRect(-w/2, -h/2, w, h, 8);
+    // More solid, visible button
+    g.fillStyle(baseColor, alpha * 0.5);
+    g.fillRoundedRect(-w/2, -h/2, w, h, 10);
     
-    g.lineStyle(2, baseColor, alpha);
-    g.strokeRoundedRect(-w/2, -h/2, w, h, 8);
+    g.lineStyle(3, baseColor, alpha);
+    g.strokeRoundedRect(-w/2, -h/2, w, h, 10);
     
+    // Inner highlight
     if (hover) {
-      g.fillStyle(baseColor, 0.1);
-      g.fillRoundedRect(-w/2, -h/2, w, h, 8);
+      g.fillStyle(0xffffff, 0.1);
+      g.fillRoundedRect(-w/2 + 3, -h/2 + 3, w - 6, h/2 - 3, 6);
     }
   }
   
@@ -202,20 +201,88 @@ export class Web3UI {
     this.addCloseButton(modal, 0, 120);
   }
   
-  // === WALLET MODAL (Connected) ===
+  // === WALLET MODAL ===
   
   showWalletModal(): void {
-    const modal = this.createModal(400, 520);
+    const isConnected = web3Manager.isConnected();
+    const modal = this.createModal(400, isConnected ? 520 : 380);
     
     // Title
     const title = this.scene.add.text(0, -230, '⛓️ BLOCKCHAIN', {
-      fontSize: '20px',
+      fontSize: '22px',
       color: '#00ffff',
       fontFamily: TITLE_FONT,
       fontStyle: 'bold'
     }).setOrigin(0.5);
     modal.container.add(title);
     
+    if (!isConnected) {
+      // NOT CONNECTED - Show connect prompt
+      this.showConnectPrompt(modal);
+    } else {
+      // CONNECTED - Show full wallet UI
+      this.showConnectedUI(modal);
+    }
+    
+    this.addCloseButton(modal, 175, -220);
+  }
+  
+  private showConnectPrompt(modal: ModalElements): void {
+    // Prompt message
+    const message = this.scene.add.text(0, -120, 'Connect your wallet to:', {
+      fontSize: '14px',
+      color: '#aaaaaa',
+      fontFamily: BODY_FONT
+    }).setOrigin(0.5);
+    modal.container.add(message);
+    
+    // Benefits list
+    const benefits = [
+      '📤  Submit scores to leaderboard',
+      '🏆  View global rankings',
+      '🎖️  Mint achievement NFTs',
+    ];
+    
+    benefits.forEach((text, i) => {
+      const item = this.scene.add.text(0, -70 + i * 35, text, {
+        fontSize: '13px',
+        color: '#ffffff',
+        fontFamily: BODY_FONT
+      }).setOrigin(0.5);
+      modal.container.add(item);
+    });
+    
+    // Connect button - BIG and visible
+    const connectBtn = this.createButton(0, 80, 280, 55, '🧲  CONNECT WALLET', 0x9945ff, async () => {
+      const btnText = modal.container.getByName('connectBtnText') as Phaser.GameObjects.Text;
+      if (btnText) btnText.setText('⏳ Connecting...');
+      
+      const address = await web3Manager.connect();
+      
+      if (address) {
+        this.closeModal();
+        this.showToast('Wallet connected!', 'success');
+        // Reopen with full UI
+        this.showWalletModal();
+      } else {
+        if (btnText) btnText.setText('🧲  CONNECT WALLET');
+      }
+    });
+    modal.container.add(connectBtn);
+    
+    // No wallet? link
+    const noWallet = this.scene.add.text(0, 140, "Don't have a wallet? Get MetaMask →", {
+      fontSize: '11px',
+      color: '#666666',
+      fontFamily: BODY_FONT
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    noWallet.on('pointerover', () => noWallet.setColor('#9945ff'));
+    noWallet.on('pointerout', () => noWallet.setColor('#666666'));
+    noWallet.on('pointerdown', () => window.open('https://metamask.io/download/', '_blank'));
+    modal.container.add(noWallet);
+  }
+  
+  private showConnectedUI(modal: ModalElements): void {
     // Header with address
     const addressBg = this.scene.add.graphics();
     addressBg.fillStyle(0x1a2a1a, 0.9);
@@ -311,8 +378,6 @@ export class Web3UI {
       this.scene.scene.restart();
     });
     modal.container.add(disconnectBtn);
-    
-    this.addCloseButton(modal, 175, -220);
   }
   
   private async addStatsSection(container: Phaser.GameObjects.Container, y: number): Promise<void> {
