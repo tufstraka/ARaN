@@ -2,72 +2,101 @@ import Phaser from 'phaser';
 import { COLORS } from '../config/gameConfig';
 
 /**
- * Machine Factory Background
- * Parallax layers with industrial machinery silhouettes
+ * Realistic Industrial Factory Background
+ * Multi-layer parallax with atmospheric effects, lighting, and motion
  */
 export class BackgroundAnimations {
   private scene: Phaser.Scene;
   private layers: Phaser.GameObjects.TileSprite[] = [];
   private particles: Phaser.GameObjects.Graphics[] = [];
   private gears: Phaser.GameObjects.Graphics[] = [];
+  private smokeEmitters: { x: number; y: number; timer: Phaser.Time.TimerEvent }[] = [];
+  private windowLights: Phaser.GameObjects.Graphics[] = [];
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
   
   create(): void {
-    this.createGradient();
+    this.createSkyGradient();
+    this.createAtmosphericHaze();
     this.createFactoryLayers();
     this.createBackgroundGears();
-    this.createSubtleParticles();
-    this.createAmbientGlow();
+    this.createWindowLights();
+    this.createSmoke();
+    this.createSparks();
+    this.createFurnaceGlow();
+    this.createForegroundHaze();
   }
   
-  private createGradient(): void {
+  /**
+   * Deep industrial sky with subtle color variation
+   */
+  private createSkyGradient(): void {
     const { width, height } = this.scene.cameras.main;
     
     const bg = this.scene.add.graphics();
-    bg.setDepth(-10);
+    bg.setDepth(-20);
     
-    // Deep industrial gradient
+    // Night sky with industrial haze
     bg.fillGradientStyle(
-      0x1a1a2e, 0x1a1a2e,
-      0x0a0a12, 0x0a0a12
+      0x0d0d1a, 0x0d0d1a,  // Top: deep night
+      0x1a1520, 0x1a1520   // Bottom: slightly warmer (furnace reflection)
     );
     bg.fillRect(0, 0, width, height);
+    
+    // Subtle stars/distant lights
+    for (let i = 0; i < 30; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * (height * 0.4);
+      const size = 0.5 + Math.random() * 1;
+      const alpha = 0.1 + Math.random() * 0.2;
+      
+      bg.fillStyle(0xffffff, alpha);
+      bg.fillCircle(x, y, size);
+    }
   }
   
+  /**
+   * Atmospheric depth - haze between layers
+   */
+  private createAtmosphericHaze(): void {
+    const { width, height } = this.scene.cameras.main;
+    
+    // Far haze layer
+    const haze = this.scene.add.graphics();
+    haze.setDepth(-15);
+    
+    haze.fillGradientStyle(
+      0x1a1a2e, 0x1a1a2e,
+      0x0d0d1a, 0x0d0d1a,
+      0.0, 0.0, 0.15, 0.15
+    );
+    haze.fillRect(0, height * 0.3, width, height * 0.7);
+  }
+  
+  /**
+   * Factory silhouette layers with detailed machinery
+   */
   private createFactoryLayers(): void {
     const { width, height } = this.scene.cameras.main;
     
-    // Far layer - distant machinery
-    const farLayer = this.createMachineLayer(
-      height * 0.45,
-      0.2,
-      0x0f0f1a,
-      0.5,
-      'far'
-    );
+    // Very far - distant city/industrial glow
+    const veryFar = this.createMachineLayer(height * 0.35, 0.1, 0x08080f, 0.4, 'veryfar');
     
-    // Mid layer - medium machinery
-    const midLayer = this.createMachineLayer(
-      height * 0.55,
-      0.4,
-      0x161625,
-      0.6,
-      'mid'
-    );
+    // Far layer
+    const farLayer = this.createMachineLayer(height * 0.42, 0.2, 0x0c0c16, 0.5, 'far');
     
-    // Near layer - close machinery
-    const nearLayer = this.createMachineLayer(
-      height * 0.7,
-      0.7,
-      0x1e1e30,
-      0.7,
-      'near'
-    );
+    // Mid-far
+    const midFar = this.createMachineLayer(height * 0.5, 0.35, 0x10101c, 0.6, 'midfar');
     
-    this.layers.push(farLayer, midLayer, nearLayer);
+    // Mid layer
+    const midLayer = this.createMachineLayer(height * 0.58, 0.5, 0x151522, 0.7, 'mid');
+    
+    // Near layer
+    const nearLayer = this.createMachineLayer(height * 0.68, 0.75, 0x1a1a2a, 0.8, 'near');
+    
+    this.layers.push(veryFar, farLayer, midFar, midLayer, nearLayer);
   }
   
   private createMachineLayer(
@@ -75,45 +104,66 @@ export class BackgroundAnimations {
     parallaxSpeed: number,
     color: number,
     alpha: number,
-    type: 'far' | 'mid' | 'near'
+    type: string
   ): Phaser.GameObjects.TileSprite {
     const { width } = this.scene.cameras.main;
     
-    const textureName = `machine_${type}_${Date.now()}`;
-    const textureWidth = 800;
-    const textureHeight = 250;
+    const textureName = `factory_${type}_${Date.now()}`;
+    const textureWidth = 1024;
+    const textureHeight = 300;
     
     const graphics = this.scene.add.graphics();
     
-    if (type === 'far') {
-      this.drawDistantMachinery(graphics, textureWidth, textureHeight, color);
+    // Draw based on layer depth
+    if (type === 'veryfar') {
+      this.drawVeryDistantFactory(graphics, textureWidth, textureHeight, color);
+    } else if (type === 'far') {
+      this.drawDistantFactory(graphics, textureWidth, textureHeight, color);
+    } else if (type === 'midfar') {
+      this.drawMidFarFactory(graphics, textureWidth, textureHeight, color);
     } else if (type === 'mid') {
-      this.drawMidMachinery(graphics, textureWidth, textureHeight, color);
+      this.drawMidFactory(graphics, textureWidth, textureHeight, color);
     } else {
-      this.drawNearMachinery(graphics, textureWidth, textureHeight, color);
+      this.drawNearFactory(graphics, textureWidth, textureHeight, color);
     }
     
     graphics.generateTexture(textureName, textureWidth, textureHeight);
     graphics.destroy();
     
-    const layer = this.scene.add.tileSprite(
-      0, baseY,
-      width + textureWidth,
-      textureHeight,
-      textureName
-    );
+    const layer = this.scene.add.tileSprite(0, baseY, width + textureWidth, textureHeight, textureName);
     layer.setOrigin(0, 0);
     layer.setAlpha(alpha);
-    layer.setDepth(-5 + (type === 'far' ? 0 : type === 'mid' ? 1 : 2));
+    layer.setDepth(-10 + (type === 'veryfar' ? 0 : type === 'far' ? 1 : type === 'midfar' ? 2 : type === 'mid' ? 3 : 4));
     layer.setData('parallaxSpeed', parallaxSpeed);
     
     return layer;
   }
   
   /**
-   * Distant: Smokestacks, large tanks, industrial towers
+   * Very distant - just shapes and glow
    */
-  private drawDistantMachinery(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
+  private drawVeryDistantFactory(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
+    g.fillStyle(color);
+    let x = 0;
+    
+    while (x < w) {
+      const bw = 20 + Math.random() * 40;
+      const bh = 30 + Math.random() * 60;
+      g.fillRect(x, h - bh, bw, bh);
+      
+      // Tall thin smokestacks
+      if (Math.random() > 0.7) {
+        g.fillRect(x + bw/2 - 3, h - bh - 40, 6, 40);
+      }
+      
+      x += bw + 15 + Math.random() * 30;
+    }
+  }
+  
+  /**
+   * Distant smokestacks and cooling towers
+   */
+  private drawDistantFactory(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
     g.fillStyle(color);
     let x = 0;
     
@@ -121,41 +171,43 @@ export class BackgroundAnimations {
       const type = Math.random();
       
       if (type < 0.3) {
-        // Smokestack
-        const stackW = 15 + Math.random() * 10;
-        const stackH = 100 + Math.random() * 80;
-        g.fillRect(x, h - stackH, stackW, stackH);
-        // Top rim
-        g.fillRect(x - 3, h - stackH, stackW + 6, 8);
+        // Cooling tower shape
+        const baseW = 40 + Math.random() * 20;
+        const topW = baseW * 0.7;
+        const towerH = 80 + Math.random() * 40;
+        
+        // Hyperbolic shape approximation
+        g.fillRect(x + (baseW - topW)/2, h - towerH, topW, 15);
+        g.fillRect(x + 5, h - towerH + 15, baseW - 10, towerH - 15);
+        g.fillRect(x, h - 20, baseW, 20);
+        
       } else if (type < 0.6) {
-        // Storage tank (cylinder-ish)
-        const tankW = 40 + Math.random() * 30;
-        const tankH = 60 + Math.random() * 50;
-        g.fillRect(x, h - tankH, tankW, tankH);
-        // Dome top
-        g.fillRect(x + 5, h - tankH - 10, tankW - 10, 12);
-        g.fillRect(x + 10, h - tankH - 15, tankW - 20, 8);
+        // Tall smokestack
+        const stackW = 12 + Math.random() * 8;
+        const stackH = 100 + Math.random() * 60;
+        g.fillRect(x, h - stackH, stackW, stackH);
+        g.fillRect(x - 3, h - stackH, stackW + 6, 8);
+        g.fillRect(x - 2, h - 15, stackW + 4, 15);
+        
       } else {
-        // Industrial tower
-        const towerW = 25 + Math.random() * 20;
-        const towerH = 120 + Math.random() * 60;
-        g.fillRect(x, h - towerH, towerW, towerH);
-        // Antenna/spire
-        g.fillRect(x + towerW/2 - 2, h - towerH - 30, 4, 30);
-        // Platforms
-        for (let py = h - towerH + 30; py < h - 20; py += 40) {
-          g.fillRect(x - 5, py, towerW + 10, 4);
-        }
+        // Industrial building block
+        const bw = 50 + Math.random() * 40;
+        const bh = 50 + Math.random() * 40;
+        g.fillRect(x, h - bh, bw, bh);
+        
+        // Rooftop equipment
+        g.fillRect(x + 10, h - bh - 10, 15, 10);
+        g.fillRect(x + bw - 20, h - bh - 15, 10, 15);
       }
       
-      x += 60 + Math.random() * 80;
+      x += 60 + Math.random() * 50;
     }
   }
   
   /**
-   * Mid: Conveyor structures, machinery housings, pipes
+   * Mid-far: More detailed structures
    */
-  private drawMidMachinery(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
+  private drawMidFarFactory(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
     g.fillStyle(color);
     let x = 0;
     
@@ -163,62 +215,52 @@ export class BackgroundAnimations {
       const type = Math.random();
       
       if (type < 0.35) {
-        // Machinery housing with gear outline
-        const boxW = 60 + Math.random() * 40;
-        const boxH = 70 + Math.random() * 50;
-        g.fillRect(x, h - boxH, boxW, boxH);
-        
-        // Circular gear suggestion (lighter)
-        g.fillStyle(color);
-        const gearX = x + boxW / 2;
-        const gearY = h - boxH / 2;
-        const gearR = Math.min(boxW, boxH) * 0.3;
-        g.fillCircle(gearX, gearY, gearR);
-        // Gear center hole (darker)
-        g.fillStyle(0x0a0a12);
-        g.fillCircle(gearX, gearY, gearR * 0.3);
-        g.fillStyle(color);
+        // Storage silos
+        const siloW = 30 + Math.random() * 20;
+        const siloH = 70 + Math.random() * 50;
+        g.fillRect(x, h - siloH, siloW, siloH);
+        // Dome top
+        g.fillCircle(x + siloW/2, h - siloH, siloW/2);
+        // Ladder
+        g.fillRect(x + siloW - 5, h - siloH + 10, 4, siloH - 15);
         
       } else if (type < 0.65) {
-        // Conveyor belt structure
-        const convW = 80 + Math.random() * 60;
-        const convH = 30 + Math.random() * 20;
-        const legH = 40 + Math.random() * 30;
+        // Factory building with sawtooth roof
+        const bw = 80 + Math.random() * 50;
+        const bh = 60 + Math.random() * 40;
+        g.fillRect(x, h - bh, bw, bh);
         
-        // Belt
-        g.fillRect(x, h - legH - convH, convW, convH);
-        // Legs
-        g.fillRect(x + 10, h - legH, 12, legH);
-        g.fillRect(x + convW - 22, h - legH, 12, legH);
-        // Wheels at ends
-        g.fillCircle(x + 10, h - legH - convH/2, convH/2 - 2);
-        g.fillCircle(x + convW - 10, h - legH - convH/2, convH/2 - 2);
+        // Sawtooth roof
+        const toothW = 20;
+        for (let tx = x; tx < x + bw; tx += toothW) {
+          g.fillRect(tx, h - bh - 12, toothW - 2, 12);
+          g.fillRect(tx, h - bh - 18, 8, 8);
+        }
         
       } else {
-        // Pipe assembly
-        const pipeH = 50 + Math.random() * 40;
-        const baseW = 50 + Math.random() * 30;
+        // Crane/gantry
+        const gantryW = 60 + Math.random() * 40;
+        const gantryH = 90 + Math.random() * 40;
         
-        // Vertical pipe
-        g.fillRect(x + 20, h - pipeH - 60, 15, 60);
-        // Horizontal pipes
-        g.fillRect(x, h - pipeH, baseW + 40, 12);
-        g.fillRect(x, h - pipeH + 25, baseW + 20, 12);
-        // Valve wheel
-        g.fillCircle(x + baseW/2, h - pipeH - 30, 10);
-        g.fillStyle(0x0a0a12);
-        g.fillCircle(x + baseW/2, h - pipeH - 30, 4);
-        g.fillStyle(color);
+        // Legs
+        g.fillRect(x, h - gantryH, 8, gantryH);
+        g.fillRect(x + gantryW - 8, h - gantryH, 8, gantryH);
+        // Top beam
+        g.fillRect(x - 10, h - gantryH, gantryW + 20, 10);
+        // Trolley
+        g.fillRect(x + gantryW/2 - 10, h - gantryH + 10, 20, 15);
+        // Cable
+        g.fillRect(x + gantryW/2 - 1, h - gantryH + 25, 2, 30);
       }
       
-      x += 100 + Math.random() * 80;
+      x += 100 + Math.random() * 60;
     }
   }
   
   /**
-   * Near: Large machines, robotic arms, presses
+   * Mid: Detailed machinery
    */
-  private drawNearMachinery(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
+  private drawMidFactory(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
     g.fillStyle(color);
     let x = 0;
     
@@ -226,97 +268,190 @@ export class BackgroundAnimations {
       const type = Math.random();
       
       if (type < 0.3) {
-        // Industrial press / stamper
-        const baseW = 80 + Math.random() * 50;
-        const baseH = 40;
-        const pressH = 100 + Math.random() * 50;
+        // Conveyor system
+        const convW = 100 + Math.random() * 60;
+        const convH = 25;
+        const legH = 50 + Math.random() * 30;
         
-        // Base
-        g.fillRect(x, h - baseH, baseW, baseH);
-        // Vertical frame
-        g.fillRect(x + 10, h - pressH, 15, pressH - baseH);
-        g.fillRect(x + baseW - 25, h - pressH, 15, pressH - baseH);
-        // Top beam
-        g.fillRect(x, h - pressH, baseW, 20);
-        // Press head
-        g.fillRect(x + 20, h - pressH + 30, baseW - 40, 25);
+        // Support structure
+        g.fillRect(x + 10, h - legH, 10, legH);
+        g.fillRect(x + convW - 20, h - legH, 10, legH);
+        g.fillRect(x + convW/2 - 5, h - legH, 10, legH);
+        
+        // Belt
+        g.fillRect(x, h - legH - convH, convW, convH);
+        // Rollers
+        g.fillCircle(x + 12, h - legH - convH/2, 10);
+        g.fillCircle(x + convW - 12, h - legH - convH/2, 10);
         
       } else if (type < 0.6) {
-        // Robotic arm silhouette
-        const baseW = 40;
-        const baseH = 30;
+        // Large gear housing
+        const boxW = 70 + Math.random() * 40;
+        const boxH = 80 + Math.random() * 40;
+        g.fillRect(x, h - boxH, boxW, boxH);
         
-        // Base
-        g.fillRect(x, h - baseH, baseW, baseH);
-        // Arm segment 1 (angled up)
-        g.fillRect(x + 15, h - baseH - 50, 12, 55);
-        // Joint
-        g.fillCircle(x + 21, h - baseH - 50, 10);
-        // Arm segment 2
-        g.fillRect(x + 25, h - baseH - 80, 10, 35);
-        // Gripper
-        g.fillRect(x + 20, h - baseH - 95, 20, 15);
-        g.fillRect(x + 18, h - baseH - 100, 8, 8);
-        g.fillRect(x + 34, h - baseH - 100, 8, 8);
+        // Gear visible through opening
+        const gearR = Math.min(boxW, boxH) * 0.3;
+        const gearX = x + boxW/2;
+        const gearY = h - boxH/2;
         
-      } else {
-        // Large gear mechanism
-        const gearR = 35 + Math.random() * 25;
-        const housingW = gearR * 2.5;
-        const housingH = gearR * 2.2;
+        // Darker opening
+        g.fillStyle(0x050508);
+        g.fillRect(x + 10, h - boxH + 15, boxW - 20, boxH - 30);
+        g.fillStyle(color);
         
-        // Housing
-        g.fillRect(x, h - housingH, housingW, housingH);
-        
-        // Main gear (visible portion)
-        const gearX = x + housingW / 2;
-        const gearY = h - housingH / 2;
+        // Gear silhouette
         g.fillCircle(gearX, gearY, gearR);
-        
-        // Gear teeth suggestion
         for (let i = 0; i < 8; i++) {
           const angle = (i / 8) * Math.PI * 2;
-          const toothX = gearX + Math.cos(angle) * gearR;
-          const toothY = gearY + Math.sin(angle) * gearR;
-          g.fillRect(toothX - 4, toothY - 4, 8, 8);
+          g.fillRect(
+            gearX + Math.cos(angle) * gearR - 4,
+            gearY + Math.sin(angle) * gearR - 4,
+            8, 8
+          );
         }
         
-        // Center axle
-        g.fillStyle(0x0a0a12);
-        g.fillCircle(gearX, gearY, gearR * 0.25);
-        g.fillStyle(color);
+      } else {
+        // Industrial press
+        const pressW = 50 + Math.random() * 30;
+        const pressH = 100 + Math.random() * 40;
         
-        // Smaller connected gear
-        const smallGearX = gearX + gearR + 15;
-        const smallGearY = gearY + 10;
-        const smallR = gearR * 0.5;
-        g.fillCircle(smallGearX, smallGearY, smallR);
-        g.fillStyle(0x0a0a12);
-        g.fillCircle(smallGearX, smallGearY, smallR * 0.3);
-        g.fillStyle(color);
+        // Frame
+        g.fillRect(x, h - pressH, 12, pressH);
+        g.fillRect(x + pressW - 12, h - pressH, 12, pressH);
+        g.fillRect(x, h - pressH, pressW, 15);
+        g.fillRect(x, h - 20, pressW, 20);
+        
+        // Ram
+        g.fillRect(x + 15, h - pressH + 30, pressW - 30, 25);
+        // Hydraulic cylinder
+        g.fillRect(x + pressW/2 - 8, h - pressH + 15, 16, 20);
       }
       
-      x += 140 + Math.random() * 100;
+      x += 120 + Math.random() * 80;
     }
   }
   
   /**
-   * Animated gears in background
+   * Near: Large detailed machinery
+   */
+  private drawNearFactory(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
+    g.fillStyle(color);
+    let x = 0;
+    
+    while (x < w) {
+      const type = Math.random();
+      
+      if (type < 0.35) {
+        // Robotic arm assembly
+        const baseW = 50;
+        const baseH = 35;
+        
+        g.fillRect(x, h - baseH, baseW, baseH);
+        
+        // Arm segments
+        g.fillRect(x + 20, h - baseH - 60, 14, 65);
+        g.fillCircle(x + 27, h - baseH - 60, 12);
+        g.fillRect(x + 30, h - baseH - 90, 12, 35);
+        g.fillCircle(x + 36, h - baseH - 90, 10);
+        
+        // End effector
+        g.fillRect(x + 32, h - baseH - 105, 20, 18);
+        g.fillRect(x + 30, h - baseH - 115, 8, 12);
+        g.fillRect(x + 44, h - baseH - 115, 8, 12);
+        
+      } else if (type < 0.65) {
+        // Large gear mechanism
+        const housingW = 100 + Math.random() * 40;
+        const housingH = 120 + Math.random() * 40;
+        
+        g.fillRect(x, h - housingH, housingW, housingH);
+        
+        // Main gear
+        const mainR = housingH * 0.35;
+        const mainX = x + housingW * 0.4;
+        const mainY = h - housingH * 0.5;
+        
+        g.fillCircle(mainX, mainY, mainR);
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2;
+          g.fillRect(
+            mainX + Math.cos(angle) * mainR - 5,
+            mainY + Math.sin(angle) * mainR - 5,
+            10, 10
+          );
+        }
+        
+        // Smaller meshed gear
+        const smallR = mainR * 0.6;
+        const smallX = mainX + mainR + smallR - 5;
+        const smallY = mainY + 15;
+        
+        g.fillCircle(smallX, smallY, smallR);
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          g.fillRect(
+            smallX + Math.cos(angle) * smallR - 4,
+            smallY + Math.sin(angle) * smallR - 4,
+            8, 8
+          );
+        }
+        
+        // Axle holes
+        g.fillStyle(0x050508);
+        g.fillCircle(mainX, mainY, mainR * 0.15);
+        g.fillCircle(smallX, smallY, smallR * 0.15);
+        g.fillStyle(color);
+        
+      } else {
+        // Furnace/boiler
+        const furnaceW = 80 + Math.random() * 40;
+        const furnaceH = 100 + Math.random() * 50;
+        
+        g.fillRect(x, h - furnaceH, furnaceW, furnaceH);
+        
+        // Rivets along edges
+        for (let ry = h - furnaceH + 15; ry < h - 10; ry += 20) {
+          g.fillCircle(x + 8, ry, 3);
+          g.fillCircle(x + furnaceW - 8, ry, 3);
+        }
+        
+        // Door/hatch
+        g.fillStyle(0x050508);
+        g.fillRect(x + 15, h - 60, 30, 40);
+        g.fillStyle(color);
+        g.fillRect(x + 15, h - 60, 30, 4);
+        
+        // Pipes coming out
+        g.fillRect(x + furnaceW, h - furnaceH + 20, 25, 12);
+        g.fillRect(x + furnaceW, h - furnaceH + 50, 20, 10);
+        
+        // Stack on top
+        g.fillRect(x + furnaceW/2 - 10, h - furnaceH - 40, 20, 45);
+      }
+      
+      x += 150 + Math.random() * 100;
+    }
+  }
+  
+  /**
+   * Animated spinning gears
    */
   private createBackgroundGears(): void {
     const { width, height } = this.scene.cameras.main;
     
     const gearConfigs = [
-      { x: width * 0.15, y: height * 0.3, r: 35, speed: 15000, cw: true },
-      { x: width * 0.15 + 45, y: height * 0.3 + 28, r: 22, speed: 9500, cw: false },
-      { x: width * 0.8, y: height * 0.4, r: 40, speed: 18000, cw: false },
-      { x: width * 0.5, y: height * 0.2, r: 25, speed: 12000, cw: true },
+      { x: width * 0.12, y: height * 0.35, r: 40, speed: 20000, cw: true, alpha: 0.15 },
+      { x: width * 0.12 + 52, y: height * 0.35 + 32, r: 25, speed: 12500, cw: false, alpha: 0.15 },
+      { x: width * 0.85, y: height * 0.45, r: 50, speed: 25000, cw: false, alpha: 0.12 },
+      { x: width * 0.85 + 65, y: height * 0.45, r: 30, speed: 15000, cw: true, alpha: 0.12 },
+      { x: width * 0.5, y: height * 0.25, r: 30, speed: 18000, cw: true, alpha: 0.1 },
     ];
     
     gearConfigs.forEach(cfg => {
-      const gear = this.createGear(cfg.r, 0x1a1a2e, 0.3);
+      const gear = this.createGear(cfg.r, 0x1a1a30, cfg.alpha);
       gear.setPosition(cfg.x, cfg.y);
-      gear.setDepth(-6);
+      gear.setDepth(-8);
       
       this.scene.tweens.add({
         targets: gear,
@@ -332,56 +467,134 @@ export class BackgroundAnimations {
   
   private createGear(radius: number, color: number, alpha: number): Phaser.GameObjects.Graphics {
     const gear = this.scene.add.graphics();
-    const teeth = Math.floor(radius / 5);
+    const teeth = Math.floor(radius / 4);
     
     gear.fillStyle(color, alpha);
     gear.fillCircle(0, 0, radius);
     
-    // Teeth
     for (let i = 0; i < teeth; i++) {
       const angle = (i / teeth) * Math.PI * 2;
       const tx = Math.cos(angle) * radius;
       const ty = Math.sin(angle) * radius;
-      gear.fillRect(tx - 3, ty - 3, 6, 6);
+      gear.fillRect(tx - 4, ty - 4, 8, 8);
     }
     
-    // Center hole
-    gear.fillStyle(0x0a0a12, alpha);
-    gear.fillCircle(0, 0, radius * 0.3);
+    gear.fillStyle(0x080810, alpha);
+    gear.fillCircle(0, 0, radius * 0.25);
     
     return gear;
   }
   
-  private createSubtleParticles(): void {
+  /**
+   * Flickering window lights
+   */
+  private createWindowLights(): void {
     const { width, height } = this.scene.cameras.main;
     
-    for (let i = 0; i < 12; i++) {
+    // Scatter window lights across mid-ground
+    for (let i = 0; i < 20; i++) {
+      const x = Math.random() * width;
+      const y = height * 0.5 + Math.random() * (height * 0.3);
+      
+      const light = this.scene.add.graphics();
+      light.setDepth(-3);
+      
+      const lightColor = Math.random() > 0.7 ? 0xff6600 : 0xffcc00;
+      light.fillStyle(lightColor, 0.3 + Math.random() * 0.3);
+      light.fillRect(-3, -4, 6, 8);
+      
+      light.setPosition(x, y);
+      
+      // Flicker
+      this.scene.tweens.add({
+        targets: light,
+        alpha: 0.2 + Math.random() * 0.3,
+        duration: 100 + Math.random() * 200,
+        yoyo: true,
+        repeat: -1,
+        delay: Math.random() * 2000
+      });
+      
+      this.windowLights.push(light);
+    }
+  }
+  
+  /**
+   * Rising smoke from stacks
+   */
+  private createSmoke(): void {
+    const { width, height } = this.scene.cameras.main;
+    
+    // Smoke emission points
+    const smokePoints = [
+      { x: width * 0.2, y: height * 0.35 },
+      { x: width * 0.45, y: height * 0.4 },
+      { x: width * 0.7, y: height * 0.38 },
+      { x: width * 0.9, y: height * 0.42 },
+    ];
+    
+    smokePoints.forEach(point => {
+      const timer = this.scene.time.addEvent({
+        delay: 300 + Math.random() * 200,
+        callback: () => this.emitSmoke(point.x, point.y),
+        loop: true
+      });
+      this.smokeEmitters.push({ ...point, timer });
+    });
+  }
+  
+  private emitSmoke(x: number, y: number): void {
+    const smoke = this.scene.add.graphics();
+    smoke.setDepth(-2);
+    
+    const size = 8 + Math.random() * 12;
+    smoke.fillStyle(0x2a2a3a, 0.2);
+    smoke.fillCircle(0, 0, size);
+    
+    smoke.setPosition(x + (Math.random() - 0.5) * 10, y);
+    
+    this.scene.tweens.add({
+      targets: smoke,
+      y: y - 80 - Math.random() * 60,
+      x: x + (Math.random() - 0.5) * 50,
+      alpha: 0,
+      scale: 2 + Math.random(),
+      duration: 3000 + Math.random() * 2000,
+      ease: 'Sine.easeOut',
+      onComplete: () => smoke.destroy()
+    });
+  }
+  
+  /**
+   * Industrial sparks
+   */
+  private createSparks(): void {
+    const { width, height } = this.scene.cameras.main;
+    
+    for (let i = 0; i < 8; i++) {
       const particle = this.scene.add.graphics();
       particle.setDepth(-1);
       
       const size = 1 + Math.random() * 1.5;
-      const alpha = 0.15 + Math.random() * 0.15;
+      const isOrange = Math.random() > 0.3;
       
-      // Orange/yellow sparks - more industrial
-      const sparkColor = Math.random() > 0.5 ? 0xFF6600 : COLORS.NEON_CYAN;
-      particle.fillStyle(sparkColor, alpha);
+      particle.fillStyle(isOrange ? 0xff6600 : 0xffcc00, 0.4 + Math.random() * 0.4);
       particle.fillCircle(0, 0, size);
       
-      particle.setPosition(
-        Math.random() * width,
-        Math.random() * height
-      );
+      const startX = Math.random() * width;
+      const startY = height * 0.6 + Math.random() * (height * 0.3);
+      particle.setPosition(startX, startY);
       
       this.scene.tweens.add({
         targets: particle,
-        y: particle.y - 40 - Math.random() * 80,
-        x: particle.x + (Math.random() - 0.5) * 40,
+        y: startY - 30 - Math.random() * 50,
+        x: startX + (Math.random() - 0.5) * 30,
         alpha: 0,
-        duration: 3000 + Math.random() * 3000,
+        duration: 1500 + Math.random() * 1500,
         repeat: -1,
         onRepeat: () => {
-          particle.setPosition(Math.random() * width, height + 10);
-          particle.setAlpha(alpha);
+          particle.setPosition(Math.random() * width, height * 0.6 + Math.random() * (height * 0.3));
+          particle.setAlpha(0.4 + Math.random() * 0.4);
         }
       });
       
@@ -389,28 +602,50 @@ export class BackgroundAnimations {
     }
   }
   
-  private createAmbientGlow(): void {
+  /**
+   * Furnace glow at bottom
+   */
+  private createFurnaceGlow(): void {
     const { width, height } = this.scene.cameras.main;
     
     const glow = this.scene.add.graphics();
-    glow.setDepth(-4);
+    glow.setDepth(-5);
     
-    // Industrial orange glow at bottom
-    for (let i = 0; i < 5; i++) {
-      const y = height - 60 + i * 12;
-      const alpha = 0.04 - i * 0.007;
-      glow.fillStyle(0xFF6600, alpha);
-      glow.fillRect(0, y, width, 12);
+    // Orange/red furnace glow
+    for (let i = 0; i < 8; i++) {
+      const y = height - 60 + i * 10;
+      const alpha = 0.06 - i * 0.006;
+      glow.fillStyle(0xff4400, alpha);
+      glow.fillRect(0, y, width, 10);
     }
     
+    // Pulsing
     this.scene.tweens.add({
       targets: glow,
-      alpha: 0.6,
-      duration: 2500,
+      alpha: 0.7,
+      duration: 2000,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
+  }
+  
+  /**
+   * Foreground atmospheric haze
+   */
+  private createForegroundHaze(): void {
+    const { width, height } = this.scene.cameras.main;
+    
+    const haze = this.scene.add.graphics();
+    haze.setDepth(5);
+    
+    // Very subtle foreground haze
+    haze.fillGradientStyle(
+      0x1a1520, 0x1a1520,
+      0x1a1520, 0x1a1520,
+      0.0, 0.0, 0.08, 0.08
+    );
+    haze.fillRect(0, height * 0.7, width, height * 0.3);
   }
   
   update(scrollSpeed: number, delta: number): void {
@@ -424,8 +659,12 @@ export class BackgroundAnimations {
     this.layers.forEach(l => l.destroy());
     this.particles.forEach(p => p.destroy());
     this.gears.forEach(g => g.destroy());
+    this.windowLights.forEach(w => w.destroy());
+    this.smokeEmitters.forEach(e => e.timer.destroy());
     this.layers = [];
     this.particles = [];
     this.gears = [];
+    this.windowLights = [];
+    this.smokeEmitters = [];
   }
 }
