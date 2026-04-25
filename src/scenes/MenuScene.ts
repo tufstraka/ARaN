@@ -173,21 +173,26 @@ export class MenuScene extends Phaser.Scene {
       });
     });
     
-    // Secondary buttons - stack vertically on mobile
-    const secondaryY = buttonY + (isMobile ? 80 : 70);
-    const secondaryBtnWidth = isMobile ? Math.min(width * 0.3, 110) : 90;
-    const secondaryBtnHeight = isMobile ? 45 : 38;
-    const secondarySpacing = isMobile ? Math.min(width * 0.22, 85) : 80;
+    // Secondary buttons - evenly spaced
+    const secondaryY = buttonY + (isMobile ? 85 : 75);
+    const secondaryBtnWidth = isMobile ? Math.min(width * 0.28, 100) : 95;
+    const secondaryBtnHeight = isMobile ? 42 : 38;
     
-    this.createSecondaryButton(width / 2 - secondarySpacing * 1.1, secondaryY, '⚡ UPGRADES', secondaryBtnWidth, secondaryBtnHeight, () => {
+    // Calculate even spacing for 3 buttons
+    const totalButtonsWidth = secondaryBtnWidth * 3;
+    const availableSpace = Math.min(width - 40, 380); // Max width for buttons area
+    const gapBetween = (availableSpace - totalButtonsWidth) / 2;
+    const startX = width / 2 - availableSpace / 2 + secondaryBtnWidth / 2;
+    
+    this.createSecondaryButton(startX, secondaryY, '⚡ UPGRADES', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.scene.start('UpgradeScene');
     });
     
-    this.createSecondaryButton(width / 2, secondaryY, '📜 STORY', secondaryBtnWidth, secondaryBtnHeight, () => {
+    this.createSecondaryButton(startX + secondaryBtnWidth + gapBetween, secondaryY, '📜 STORY', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.scene.start('StoryScene');
     });
     
-    this.createSecondaryButton(width / 2 + secondarySpacing * 1.1, secondaryY, '🏆 STATS', secondaryBtnWidth, secondaryBtnHeight, () => {
+    this.createSecondaryButton(startX + (secondaryBtnWidth + gapBetween) * 2, secondaryY, '🏆 STATS', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.showStatsModal();
     });
     

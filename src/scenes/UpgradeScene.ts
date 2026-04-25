@@ -154,24 +154,25 @@ export class UpgradeScene extends Phaser.Scene {
     
     // Middle section: Name, description, pips
     const textX = iconX + 35;
-    const textWidth = cardWidth - 150;
+    const textWidth = cardWidth - 170;
     
-    // Name + Level
-    const levelStr = isMaxed ? ' MAX' : ` Lv.${currentLevel + 1}`;
-    this.add.text(textX, y + 12, upgrade.name, {
+    // Name
+    const nameText = this.add.text(textX, y + 12, upgrade.name, {
       fontSize: isMobile ? '13px' : '15px',
       color: isMaxed ? '#39FF14' : '#FFFFFF',
       fontFamily: BODY_FONT,
       fontStyle: 'bold'
     });
     
-    // Level badge
+    // Level badge - positioned after name text
+    const nameWidth = nameText.width;
     const badgeColor = isMaxed ? 0x39FF14 : 0x00ffff;
     const badge = this.add.graphics();
     badge.fillStyle(badgeColor, 0.2);
-    const badgeX = textX + (isMobile ? 75 : 95);
-    badge.fillRoundedRect(badgeX, y + 10, 40, 18, 4);
-    this.add.text(badgeX + 20, y + 19, levelStr, {
+    const badgeX = textX + nameWidth + 10;
+    const levelStr = isMaxed ? 'MAX' : `Lv.${currentLevel + 1}`;
+    badge.fillRoundedRect(badgeX, y + 10, 45, 18, 4);
+    this.add.text(badgeX + 22, y + 19, levelStr, {
       fontSize: '10px',
       color: isMaxed ? '#39FF14' : '#00ffff',
       fontFamily: BODY_FONT
