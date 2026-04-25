@@ -38,17 +38,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private createBackground(): void {
-    const { width, height } = this.cameras.main;
-    
-    // Gradient background
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(
-      COLORS.BG_GRADIENT_TOP, COLORS.BG_GRADIENT_TOP,
-      COLORS.BG_GRADIENT_BOTTOM, COLORS.BG_GRADIENT_BOTTOM
-    );
-    bg.fillRect(0, 0, width, height);
-    
-    // Fun animated machine background
+    // Minimal animated factory background with parallax
     this.bgAnimations = new BackgroundAnimations(this);
     this.bgAnimations.create();
   }

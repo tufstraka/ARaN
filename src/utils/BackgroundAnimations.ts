@@ -96,17 +96,17 @@ export class BackgroundAnimations {
     
     // Generate factory silhouette texture
     const graphics = this.scene.add.graphics();
-    graphics.fillStyle(color);
+    // Note: fillStyle is set in each draw method
     
     if (type === 'far') {
       // Distant smokestacks and buildings
-      this.drawDistantFactory(graphics, textureWidth, textureHeight);
+      this.drawDistantFactory(graphics, textureWidth, textureHeight, color);
     } else if (type === 'mid') {
       // Medium buildings with chimneys
-      this.drawMidFactory(graphics, textureWidth, textureHeight);
+      this.drawMidFactory(graphics, textureWidth, textureHeight, color);
     } else {
       // Close industrial structures
-      this.drawNearFactory(graphics, textureWidth, textureHeight);
+      this.drawNearFactory(graphics, textureWidth, textureHeight, color);
     }
     
     graphics.generateTexture(textureName, textureWidth, textureHeight);
@@ -127,8 +127,9 @@ export class BackgroundAnimations {
     return layer;
   }
   
-  private drawDistantFactory(g: Phaser.GameObjects.Graphics, w: number, h: number): void {
+  private drawDistantFactory(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
     // Distant skyline with smokestacks
+    g.fillStyle(color);
     let x = 0;
     while (x < w) {
       const buildingW = 30 + Math.random() * 50;
@@ -148,13 +149,14 @@ export class BackgroundAnimations {
     }
   }
   
-  private drawMidFactory(g: Phaser.GameObjects.Graphics, w: number, h: number): void {
+  private drawMidFactory(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
     let x = 0;
     while (x < w) {
       const buildingW = 40 + Math.random() * 60;
       const buildingH = 60 + Math.random() * 100;
       
       // Main building
+      g.fillStyle(color);
       g.fillRect(x, h - buildingH, buildingW, buildingH);
       
       // Roof detail
@@ -162,20 +164,20 @@ export class BackgroundAnimations {
         g.fillRect(x + 5, h - buildingH - 15, buildingW - 10, 15);
       }
       
-      // Windows (subtle rectangles)
+      // Windows (subtle darker rectangles)
       g.fillStyle(0x0a0a12, 0.5);
       for (let wy = h - buildingH + 20; wy < h - 20; wy += 25) {
         for (let wx = x + 8; wx < x + buildingW - 8; wx += 15) {
           g.fillRect(wx, wy, 8, 12);
         }
       }
-      g.fillStyle(g.defaultFillColor);
       
       x += buildingW + 20 + Math.random() * 40;
     }
   }
   
-  private drawNearFactory(g: Phaser.GameObjects.Graphics, w: number, h: number): void {
+  private drawNearFactory(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number): void {
+    g.fillStyle(color);
     let x = 0;
     while (x < w) {
       const buildingW = 60 + Math.random() * 80;

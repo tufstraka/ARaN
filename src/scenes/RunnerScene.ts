@@ -172,27 +172,9 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   private createBackground(): void {
-    const { width, height } = this.cameras.main;
-    
-    // Gradient background
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(
-      COLORS.BG_GRADIENT_TOP, COLORS.BG_GRADIENT_TOP,
-      COLORS.BG_GRADIENT_BOTTOM, COLORS.BG_GRADIENT_BOTTOM
-    );
-    bg.fillRect(0, 0, width, height);
-    
-    // Fun animated machine background (lighter version for gameplay)
+    // Minimal animated machine background with parallax
     this.bgAnimations = new BackgroundAnimations(this);
     this.bgAnimations.create();
-    
-    // Keep parallax factory layers but enhanced
-    for (let i = 0; i < 3; i++) {
-      const layer = this.add.tileSprite(0, height - 100 - i * 80, width * 2, 120, '');
-      layer.setOrigin(0, 1);
-      layer.setAlpha(0.08 + i * 0.05);
-      this.bgLayers.push(layer);
-    }
   }
 
   private createBoundaries(): void {
