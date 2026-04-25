@@ -84,7 +84,7 @@ export const GAME_CONFIG = {
 export interface LevelData {
   id: number;
   name: string;
-  parTime: number; // Target time in seconds for bonus
+  parTime: number;
   platforms: { x: number; y: number; width: number }[];
   conveyors?: { x: number; y: number; width: number; direction: 'left' | 'right' }[];
   pistons?: { x: number; y: number; direction: 'up' | 'down' | 'left' | 'right'; delay?: number }[];
@@ -94,7 +94,37 @@ export interface LevelData {
   spikes: { x: number; y: number; flipped?: boolean }[];
   start: { x: number; y: number };
   home: { x: number; y: number };
-  tutorial?: string; // Tutorial message for the level
+  tutorial?: string;
+  difficulty?: {
+    pistonExtendTime?: number;
+    pistonRetractTime?: number;
+    pistonWaitTime?: number;
+    laserOnTime?: number;
+    laserOffTime?: number;
+  };
+}
+
+export function getDifficultyForLevel(levelId: number): {
+  pistonExtendTime: number;
+  pistonRetractTime: number;
+  pistonWaitTime: number;
+  laserOnTime: number;
+  laserOffTime: number;
+} {
+  const baseExtend = GAME_CONFIG.PISTON_EXTEND_TIME;
+  const baseRetract = GAME_CONFIG.PISTON_RETRACT_TIME;
+  const baseLaserOn = GAME_CONFIG.LASER_ON_TIME;
+  const baseLaserOff = GAME_CONFIG.LASER_OFF_TIME;
+  
+  const scaleFactor = Math.max(0.4, 1 - (levelId - 1) * 0.08);
+  
+  return {
+    pistonExtendTime: Math.max(600, Math.floor(baseExtend * scaleFactor)),
+    pistonRetractTime: Math.max(400, Math.floor(baseRetract * scaleFactor)),
+    pistonWaitTime: Math.max(200, Math.floor(500 * scaleFactor)),
+    laserOnTime: Math.max(800, Math.floor(baseLaserOn * scaleFactor)),
+    laserOffTime: Math.max(600, Math.floor(baseLaserOff * scaleFactor)),
+  };
 }
 
 // Predefined levels - MACHINES themed with progressive difficulty!

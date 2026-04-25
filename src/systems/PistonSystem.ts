@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_CONFIG, LevelData } from '../config/constants';
+import { GAME_CONFIG, LevelData, getDifficultyForLevel } from '../config/constants';
 
 interface PistonData {
   sprite: Phaser.Physics.Arcade.Sprite;
@@ -9,21 +9,24 @@ interface PistonData {
   extended: boolean;
 }
 
-/**
- * Manages pistons that extend and retract
- */
 export class PistonSystem {
   private scene: Phaser.Scene;
   public pistons: Phaser.Physics.Arcade.Group;
   private pistonData: PistonData[] = [];
+  private difficulty: ReturnType<typeof getDifficultyForLevel>;
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.pistons = scene.physics.add.group();
+    this.difficulty = getDifficultyForLevel(1);
   }
   
   create(levelData: LevelData): void {
     if (!levelData.pistons) return;
+    
+    this.difficulty = levelData.difficulty 
+      ? { ...getDifficultyForLevel(levelData.id), ...levelData.difficulty }
+      : getDifficultyForLevel(levelData.id);
     
     const tileSize = GAME_CONFIG.TILE_SIZE;
     
@@ -31,7 +34,6 @@ export class PistonSystem {
       const x = pistonDef.x * tileSize + tileSize / 2;
       const y = pistonDef.y * tileSize + tileSize / 2;
       
-      // Create piston head (the dangerous part)
       const piston = this.scene.physics.add.sprite(x, y, 'piston');
       piston.setImmovable(true);
       (piston.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
@@ -47,11 +49,9 @@ export class PistonSystem {
       };
       this.pistonData.push(data);
       
-      // Create piston base visual
       this.createPistonBase(x, y, pistonDef.direction);
       
-      // Start piston cycle with delay
-      const delay = pistonDef.delay || (index * 500);
+      const delay = pistonDef.delay || (index * Math.max(300, 500 - levelData.id * 20));
       this.scene.time.delayedCall(delay, () => this.startPistonCycle(data));
     });
   }
@@ -98,11 +98,10 @@ export class PistonSystem {
       targets: data.sprite,
       x: targetX,
       y: targetY,
-      duration: 150, // Fast extend
-      ease: 'Power2',
+      duration: 100,
+      ease: 'Power3',
       onComplete: () => {
-        // Hold extended, then retract
-        this.scene.time.delayedCall(GAME_CONFIG.PISTON_EXTEND_TIME, () => {
+        this.scene.time.delayedCall(this.difficulty.pistonExtendTime, () => {
           this.retractPiston(data);
         });
       }
@@ -116,20 +115,16 @@ export class PistonSystem {
       targets: data.sprite,
       x: data.baseX,
       y: data.baseY,
-      duration: GAME_CONFIG.PISTON_RETRACT_TIME,
+      duration: this.difficulty.pistonRetractTime,
       ease: 'Power1',
       onComplete: () => {
-        // Wait then extend again
-        this.scene.time.delayedCall(500, () => {
+        this.scene.time.delayedCall(this.difficulty.pistonWaitTime, () => {
           this.extendPiston(data);
         });
       }
     });
   }
   
-  /**
-   * Get the physics group for collision detection
-   */
   getGroup(): Phaser.Physics.Arcade.Group {
     return this.pistons;
   }
