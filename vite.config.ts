@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/',  // Root path for Netlify
+  base: './',  // Relative path for itch.io
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
