@@ -68,7 +68,7 @@ class Web3Manager {
   private address: string | null = null;
   private chainId: string | null = null;
   
-  private contractAddress: string = '';
+  private contractAddress: string = '0xd21Cc9893EA6381E8b0a6DeA968532100fFd9217';
   private targetChainId: string = SEPOLIA_CHAIN_ID;
   
   private listeners: Map<string, Set<(...args: unknown[]) => void>> = new Map();

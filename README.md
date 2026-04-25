@@ -52,7 +52,13 @@ ARAN features optional Ethereum integration for players who want to immortalize 
 
 ### Network
 
-The game is configured for Sepolia testnet. Get free testnet ETH from:
+The game is deployed on Sepolia testnet.
+
+**Contract Address:** `0xd21Cc9893EA6381E8b0a6DeA968532100fFd9217`
+
+View on Etherscan: https://sepolia.etherscan.io/address/0xd21Cc9893EA6381E8b0a6DeA968532100fFd9217
+
+Get free testnet ETH from:
 - https://sepoliafaucet.com/
 - https://www.alchemy.com/faucets/ethereum-sepolia
 
