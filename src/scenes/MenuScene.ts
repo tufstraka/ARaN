@@ -3,10 +3,16 @@ import { COLORS } from '../config/gameConfig';
 import { progression } from '../managers/ProgressionManager';
 import { soundManager } from '../utils/SoundManager';
 import { web3Manager } from '../utils/Web3Manager';
+import { BackgroundAnimations } from '../utils/BackgroundAnimations';
+
+// Fun font for titles - loaded via CSS
+const TITLE_FONT = '"Press Start 2P", "Courier New", monospace';
+const BODY_FONT = '"VT323", "Courier New", monospace';
 
 export class MenuScene extends Phaser.Scene {
   private walletButton?: Phaser.GameObjects.Text;
   private walletStatus?: Phaser.GameObjects.Text;
+  private bgAnimations?: BackgroundAnimations;
   
   constructor() {
     super({ key: 'MenuScene' });
@@ -34,7 +40,7 @@ export class MenuScene extends Phaser.Scene {
   private createBackground(): void {
     const { width, height } = this.cameras.main;
     
-    // Gradient
+    // Gradient background
     const bg = this.add.graphics();
     bg.fillGradientStyle(
       COLORS.BG_GRADIENT_TOP, COLORS.BG_GRADIENT_TOP,
@@ -42,101 +48,123 @@ export class MenuScene extends Phaser.Scene {
     );
     bg.fillRect(0, 0, width, height);
     
-    // Animated gears
-    for (let i = 0; i < 6; i++) {
-      this.createAnimatedGear(
-        Phaser.Math.Between(50, width - 50),
-        Phaser.Math.Between(100, height - 100),
-        Phaser.Math.Between(30, 60),
-        i % 2 === 0
-      );
-    }
-    
-    // Scanlines effect
-    const scanlines = this.add.graphics();
-    scanlines.fillStyle(0x000000, 0.03);
-    for (let y = 0; y < height; y += 4) {
-      scanlines.fillRect(0, y, width, 2);
-    }
-  }
-
-  private createAnimatedGear(x: number, y: number, size: number, clockwise: boolean): void {
-    const gear = this.add.graphics();
-    
-    gear.fillStyle(COLORS.STEEL, 0.15);
-    gear.fillCircle(0, 0, size);
-    
-    // Teeth
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const tx = Math.cos(angle) * size;
-      const ty = Math.sin(angle) * size;
-      gear.fillRect(tx - 4, ty - 4, 8, 8);
-    }
-    
-    gear.fillStyle(COLORS.DARK_METAL, 0.2);
-    gear.fillCircle(0, 0, size * 0.3);
-    
-    gear.setPosition(x, y);
-    
-    this.tweens.add({
-      targets: gear,
-      angle: clockwise ? 360 : -360,
-      duration: 20000 + Math.random() * 10000,
-      repeat: -1,
-      ease: 'Linear'
-    });
+    // Fun animated machine background
+    this.bgAnimations = new BackgroundAnimations(this);
+    this.bgAnimations.create();
   }
 
   private createTitle(): void {
     const { width, height } = this.cameras.main;
     const isMobile = width < 600;
-    const scale = isMobile ? 0.75 : 1;
     
-    // Robot icon with glow
+    // Robot icon with glow effect
     const robotY = isMobile ? 50 : 70;
-    const robot = this.add.text(width / 2, robotY, '🤖', {
+    const robotContainer = this.add.container(width / 2, robotY);
+    
+    // Glow behind robot
+    const glow = this.add.graphics();
+    glow.fillStyle(COLORS.NEON_CYAN, 0.15);
+    glow.fillCircle(0, 0, isMobile ? 35 : 50);
+    robotContainer.add(glow);
+    
+    const robot = this.add.text(0, 0, '🤖', {
       fontSize: isMobile ? '48px' : '72px'
     }).setOrigin(0.5);
+    robotContainer.add(robot);
     
-    // Subtle bounce
+    // Playful bounce + rotation
+    this.tweens.add({
+      targets: robotContainer,
+      y: robotY - 8,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
     this.tweens.add({
       targets: robot,
-      y: robotY - 5,
+      angle: { from: -5, to: 5 },
+      duration: 400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
+    // Glow pulse
+    this.tweens.add({
+      targets: glow,
+      alpha: 0.3,
+      scale: 1.2,
       duration: 800,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
     
-    // Title - ARAN in stylized text
-    const titleY = isMobile ? 105 : 155;
+    // Title - ARAN in fun pixel font
+    const titleY = isMobile ? 110 : 165;
     const title = this.add.text(width / 2, titleY, 'ARAN', {
-      fontSize: isMobile ? '48px' : '72px',
+      fontSize: isMobile ? '36px' : '56px',
       color: '#00FFFF',
-      fontFamily: 'monospace',
-      stroke: '#003333',
-      strokeThickness: isMobile ? 5 : 8
+      fontFamily: TITLE_FONT,
+      stroke: '#004444',
+      strokeThickness: isMobile ? 4 : 6,
+      shadow: {
+        offsetX: 3,
+        offsetY: 3,
+        color: '#FF0080',
+        blur: 0,
+        fill: true
+      }
     }).setOrigin(0.5);
     
-    // Glow pulse
-    this.tweens.add({
-      targets: title,
-      alpha: 0.85,
-      duration: 1200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
+    // Glitch effect on title
+    this.time.addEvent({
+      delay: 3000,
+      callback: () => this.glitchText(title),
+      loop: true
     });
     
-    // Subtitle
-    const subY = isMobile ? 145 : 205;
-    this.add.text(width / 2, subY, 'FACTORY ESCAPE', {
-      fontSize: isMobile ? '12px' : '16px',
+    // Subtitle with typewriter effect
+    const subY = isMobile ? 155 : 225;
+    const subText = 'FACTORY ESCAPE';
+    const subtitle = this.add.text(width / 2, subY, '', {
+      fontSize: isMobile ? '10px' : '14px',
       color: '#FF0080',
-      fontFamily: 'monospace',
-      letterSpacing: isMobile ? 3 : 6
+      fontFamily: TITLE_FONT,
+      letterSpacing: isMobile ? 2 : 4
     }).setOrigin(0.5);
+    
+    // Typewriter animation
+    let charIndex = 0;
+    this.time.addEvent({
+      delay: 80,
+      repeat: subText.length - 1,
+      callback: () => {
+        charIndex++;
+        subtitle.setText(subText.substring(0, charIndex));
+      }
+    });
+  }
+  
+  private glitchText(text: Phaser.GameObjects.Text): void {
+    const originalX = text.x;
+    const originalColor = text.style.color;
+    
+    // Quick glitch sequence
+    this.tweens.add({
+      targets: text,
+      x: originalX + Phaser.Math.Between(-5, 5),
+      duration: 50,
+      yoyo: true,
+      repeat: 2,
+      onStart: () => text.setTint(0xFF0080),
+      onComplete: () => {
+        text.setX(originalX);
+        text.clearTint();
+      }
+    });
   }
 
   private createStatsDisplay(): void {
@@ -166,37 +194,37 @@ export class MenuScene extends Phaser.Scene {
     // Best score
     this.add.text(startX, labelY, 'BEST', {
       fontSize,
-      color: '#666',
-      fontFamily: 'monospace'
+      color: '#888',
+      fontFamily: TITLE_FONT
     }).setOrigin(0.5, 0);
     this.add.text(startX, valueY, stats.bestScore.toString(), {
       fontSize: valueSize,
       color: '#00FFFF',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT
     }).setOrigin(0.5, 0);
     
     // Total runs
     this.add.text(width / 2, labelY, 'RUNS', {
       fontSize,
-      color: '#666',
-      fontFamily: 'monospace'
+      color: '#888',
+      fontFamily: TITLE_FONT
     }).setOrigin(0.5, 0);
     this.add.text(width / 2, valueY, stats.totalRuns.toString(), {
       fontSize: valueSize,
       color: '#FFFFFF',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT
     }).setOrigin(0.5, 0);
     
     // Currency
     this.add.text(startX + spacing * 2, labelY, 'GEARS', {
       fontSize,
-      color: '#666',
-      fontFamily: 'monospace'
+      color: '#888',
+      fontFamily: TITLE_FONT
     }).setOrigin(0.5, 0);
     this.add.text(startX + spacing * 2, valueY, `⚙️ ${progression.currency}`, {
       fontSize: isMobile ? '14px' : '20px',
       color: '#F39C12',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT
     }).setOrigin(0.5, 0);
   }
 
@@ -230,21 +258,31 @@ export class MenuScene extends Phaser.Scene {
       this.showStatsModal();
     });
     
-    // How to play - adjust for mobile
+    // How to play - adjust for mobile (now with fun animation)
     const instructY = secondaryY + (isMobile ? 70 : 60);
-    const instructSize = isMobile ? '16px' : '14px';
+    const instructSize = isMobile ? '20px' : '24px';
     
-    this.add.text(width / 2, instructY, 'TAP or SPACE to flip gravity', {
+    const instructText = this.add.text(width / 2, instructY, '⬆️ TAP or SPACE ⬇️', {
       fontSize: instructSize,
-      color: '#888',
-      fontFamily: 'monospace'
+      color: '#00FFFF',
+      fontFamily: BODY_FONT
     }).setOrigin(0.5);
     
+    // Pulsing instruction
+    this.tweens.add({
+      targets: instructText,
+      alpha: 0.5,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
     if (!isMobile || height > 500) {
-      this.add.text(width / 2, instructY + 25, 'Survive as long as you can!', {
-        fontSize: '12px',
-        color: '#555',
-        fontFamily: 'monospace'
+      this.add.text(width / 2, instructY + 30, 'Flip gravity to survive!', {
+        fontSize: '16px',
+        color: '#888',
+        fontFamily: BODY_FONT
       }).setOrigin(0.5);
     }
   }
@@ -257,11 +295,11 @@ export class MenuScene extends Phaser.Scene {
     btn.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12);
     btn.setPosition(x, y);
     
-    const fontSize = btnHeight > 55 ? '32px' : '28px';
+    const fontSize = btnHeight > 55 ? '24px' : '20px';
     const label = this.add.text(x, y, text, {
       fontSize,
       color: '#FFFFFF',
-      fontFamily: 'monospace'
+      fontFamily: TITLE_FONT
     }).setOrigin(0.5);
     
     const hitArea = this.add.rectangle(x, y, btnWidth + 20, btnHeight + 20, 0x000000, 0);
@@ -296,11 +334,11 @@ export class MenuScene extends Phaser.Scene {
     bg.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 8);
     bg.setPosition(x, y);
     
-    const fontSize = btnHeight > 45 ? '16px' : '14px';
+    const fontSize = btnHeight > 45 ? '12px' : '10px';
     const btn = this.add.text(x, y, text, {
       fontSize,
       color: '#AAA',
-      fontFamily: 'monospace'
+      fontFamily: TITLE_FONT
     }).setOrigin(0.5);
     
     const hitArea = this.add.rectangle(x, y, btnWidth + 10, btnHeight + 10, 0x000000, 0);

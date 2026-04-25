@@ -4,6 +4,11 @@ import { ObstacleGenerator } from '../systems/ObstacleGenerator';
 import { progression } from '../managers/ProgressionManager';
 import { EffectsManager } from '../managers/EffectsManager';
 import { soundManager } from '../utils/SoundManager';
+import { BackgroundAnimations } from '../utils/BackgroundAnimations';
+
+// Fun fonts
+const TITLE_FONT = '"Press Start 2P", "Courier New", monospace';
+const BODY_FONT = '"VT323", "Courier New", monospace';
 
 /**
  * Main endless runner game scene
@@ -41,6 +46,9 @@ export class RunnerScene extends Phaser.Scene {
   
   // Collectibles
   private gearsGroup!: Phaser.Physics.Arcade.Group;
+  
+  // Background animations
+  private bgAnimations?: BackgroundAnimations;
   
   // Background layers
   private bgLayers: Phaser.GameObjects.TileSprite[] = [];
@@ -174,61 +182,16 @@ export class RunnerScene extends Phaser.Scene {
     );
     bg.fillRect(0, 0, width, height);
     
-    // Parallax factory layers (simulated with graphics)
+    // Fun animated machine background (lighter version for gameplay)
+    this.bgAnimations = new BackgroundAnimations(this);
+    this.bgAnimations.create();
+    
+    // Keep parallax factory layers but enhanced
     for (let i = 0; i < 3; i++) {
       const layer = this.add.tileSprite(0, height - 100 - i * 80, width * 2, 120, '');
       layer.setOrigin(0, 1);
-      layer.setAlpha(0.1 + i * 0.1);
+      layer.setAlpha(0.08 + i * 0.05);
       this.bgLayers.push(layer);
-      
-      // Draw factory silhouettes
-      const graphics = this.add.graphics();
-      graphics.fillStyle(COLORS.DARK_METAL, 0.3 - i * 0.1);
-      for (let x = 0; x < width; x += 100 + Math.random() * 50) {
-        const buildingHeight = 50 + Math.random() * 100;
-        graphics.fillRect(x, height - 60 - buildingHeight, 40 + Math.random() * 40, buildingHeight);
-      }
-    }
-    
-    // Animated gears in background
-    this.createBackgroundGears();
-  }
-
-  private createBackgroundGears(): void {
-    const { width, height } = this.cameras.main;
-    
-    for (let i = 0; i < 5; i++) {
-      const gear = this.add.graphics();
-      const size = 30 + Math.random() * 50;
-      const x = Math.random() * width;
-      const y = Math.random() * (height - 200) + 100;
-      
-      gear.fillStyle(COLORS.STEEL, 0.15);
-      gear.fillCircle(0, 0, size);
-      
-      // Gear teeth
-      for (let t = 0; t < 8; t++) {
-        const angle = (t / 8) * Math.PI * 2;
-        gear.fillRect(
-          Math.cos(angle) * size - 4,
-          Math.sin(angle) * size - 4,
-          8, 8
-        );
-      }
-      
-      gear.fillStyle(COLORS.DARK_METAL, 0.2);
-      gear.fillCircle(0, 0, size * 0.4);
-      
-      gear.setPosition(x, y);
-      
-      // Slow rotation
-      this.tweens.add({
-        targets: gear,
-        angle: i % 2 === 0 ? 360 : -360,
-        duration: 15000 + i * 3000,
-        repeat: -1,
-        ease: 'Linear'
-      });
     }
   }
 
@@ -325,42 +288,49 @@ export class RunnerScene extends Phaser.Scene {
   private createUI(): void {
     const { width } = this.cameras.main;
     
-    // Score (big, prominent)
+    // Score (big, prominent) - using fun font
     this.scoreText = this.add.text(width / 2, 80, '0', {
-      fontSize: '48px',
+      fontSize: '36px',
       color: '#00FFFF',
-      fontFamily: 'monospace',
+      fontFamily: TITLE_FONT,
       stroke: '#000',
-      strokeThickness: 4
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#FF0080',
+        blur: 0,
+        fill: true
+      }
     }).setOrigin(0.5).setDepth(100);
     
-    // Combo multiplier
-    this.comboText = this.add.text(width / 2, 120, '', {
-      fontSize: '24px',
+    // Combo multiplier - VT323 for readability
+    this.comboText = this.add.text(width / 2, 125, '', {
+      fontSize: '28px',
       color: '#FF0080',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT
     }).setOrigin(0.5).setDepth(100);
     
     // Timer
     this.timerText = this.add.text(20, 70, '00:00', {
-      fontSize: '20px',
+      fontSize: '24px',
       color: '#FFFFFF',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT
     }).setDepth(100);
     
     // Phase indicator
     this.phaseText = this.add.text(width - 20, 70, 'BOOT SEQUENCE', {
-      fontSize: '16px',
+      fontSize: '10px',
       color: '#39FF14',
-      fontFamily: 'monospace'
+      fontFamily: TITLE_FONT
     }).setOrigin(1, 0).setDepth(100);
     
     // Gears count
-    this.add.text(20, 95, '⚙️', { fontSize: '20px' }).setDepth(100);
-    this.add.text(45, 95, '0', {
-      fontSize: '20px',
+    this.add.text(20, 100, '⚙️', { fontSize: '24px' }).setDepth(100);
+    this.add.text(50, 100, '0', {
+      fontSize: '28px',
       color: '#F39C12',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT
     }).setDepth(100).setName('gearsText');
   }
 

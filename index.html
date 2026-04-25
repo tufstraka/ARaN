@@ -10,6 +10,11 @@
   <title>ARAN - Factory Escape | Gamedev.js Jam 2026</title>
   <meta name="description" content="One-button endless runner. Flip gravity to escape the malfunctioning factory!">
   
+  <!-- Fun Pixel Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
   
@@ -77,11 +82,22 @@
     }
     
     #loading .title {
-      font-family: monospace;
-      font-size: 32px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 28px;
       color: #00FFFF;
       margin-bottom: 30px;
-      text-shadow: 0 0 20px #00FFFF40;
+      text-shadow: 
+        3px 3px 0 #FF0080,
+        0 0 20px #00FFFF40;
+      animation: glitch 3s infinite;
+    }
+    
+    @keyframes glitch {
+      0%, 90%, 100% { transform: translateX(0); }
+      92% { transform: translateX(-3px); filter: hue-rotate(90deg); }
+      94% { transform: translateX(3px); filter: hue-rotate(-90deg); }
+      96% { transform: translateX(-2px); }
+      98% { transform: translateX(2px); }
     }
     
     #loading .bar-container {
@@ -102,9 +118,23 @@
     
     #loading .hint {
       margin-top: 40px;
-      font-family: monospace;
-      font-size: 14px;
-      color: #666;
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      color: #888;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    
+    #loading .subtitle {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: #FF0080;
+      margin-top: 10px;
+      letter-spacing: 3px;
     }
     
     @keyframes pulse {
@@ -155,10 +185,11 @@
   <div id="loading">
     <div class="logo">🤖</div>
     <div class="title">ARAN</div>
-    <div class="bar-container">
+    <div class="subtitle">FACTORY ESCAPE</div>
+    <div class="bar-container" style="margin-top: 20px;">
       <div class="bar"></div>
     </div>
-    <div class="hint">TAP or SPACE to flip gravity</div>
+    <div class="hint">⬆️ TAP or SPACE ⬇️</div>
   </div>
   
   <!-- Game Container -->
