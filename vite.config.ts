@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: './',
+  base: '/ARaN/',  // GitHub Pages base path
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
