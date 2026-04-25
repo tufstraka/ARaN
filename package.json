@@ -31,7 +31,6 @@
   "dependencies": {
     "@enable3d/phaser-extension": "^0.26.1",
     "ethers": "^6.11.0",
-    "phaser": "^3.80.0",
-    "three": "^0.171.0"
+    "phaser": "^3.80.0"
   }
 }

@@ -5,7 +5,7 @@ import { progression } from '../managers/ProgressionManager';
 import { EffectsManager } from '../managers/EffectsManager';
 import { soundManager } from '../utils/SoundManager';
 import { BackgroundAnimations } from '../utils/BackgroundAnimations';
-import { Background3D } from '../utils/Background3D';
+// import { Background3D } from '../utils/Background3D';
 import { PHASE_STORIES, getOverseerTaunt, getRandomLoreFragment } from '../data/story';
 
 // Elegant modern fonts
@@ -51,8 +51,8 @@ export class RunnerScene extends Phaser.Scene {
   
   // Background animations
   private bgAnimations?: BackgroundAnimations;
-  private bg3D?: Background3D;
-  private use3DBackground: boolean = true; // Toggle for 3D background
+  // private bg3D?: Background3D;
+  private use3DBackground: boolean = false; // Disabled - using 2D background
   
   // Background layers
   private bgLayers: Phaser.GameObjects.TileSprite[] = [];
@@ -182,24 +182,9 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   private createBackground(): void {
-    const { width, height } = this.cameras.main;
-    
-    if (this.use3DBackground) {
-      // Initialize 3D background (renders to texture)
-      try {
-        this.bg3D = new Background3D(this, width, height);
-        console.log('[RunnerScene] 3D background initialized');
-      } catch (e) {
-        console.error('[RunnerScene] 3D background failed, falling back to 2D:', e);
-        this.use3DBackground = false;
-        this.bgAnimations = new BackgroundAnimations(this);
-        this.bgAnimations.create();
-      }
-    } else {
-      // Fallback to 2D parallax background
-      this.bgAnimations = new BackgroundAnimations(this);
-      this.bgAnimations.create();
-    }
+    // 2D parallax background
+    this.bgAnimations = new BackgroundAnimations(this);
+    this.bgAnimations.create();
   }
 
   private createBoundaries(): void {
@@ -533,12 +518,6 @@ export class RunnerScene extends Phaser.Scene {
       this.currentPhaseName
     );
     
-    // Cleanup 3D background
-    if (this.bg3D) {
-      this.bg3D.destroy();
-      this.bg3D = undefined;
-    }
-    
     // Show game over after brief delay
     this.time.delayedCall(500, () => {
       this.scene.start('GameOverScene', {
@@ -667,16 +646,7 @@ export class RunnerScene extends Phaser.Scene {
     }
     
     // Update background
-    if (this.bg3D) {
-      this.bg3D.update(this.scrollSpeed, delta);
-      
-      // Update danger level based on phase
-      const phases = ['BOOT SEQUENCE', 'CALIBRATING...', 'SYSTEMS ONLINE', 'FACTORY FLOOR', 'DANGER ZONE', 'MELTDOWN', 'CRITICAL', 'CHAOS MODE'];
-      const phaseIndex = phases.indexOf(this.currentPhaseName);
-      if (phaseIndex > 0) {
-        this.bg3D.setDanger(phaseIndex / phases.length);
-      }
-    } else if (this.bgAnimations) {
+    if (this.bgAnimations) {
       this.bgAnimations.update(this.scrollSpeed, delta);
     }
   }
