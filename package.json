@@ -14,7 +14,9 @@
     "puzzle",
     "platformer",
     "gamedevjs",
-    "jam"
+    "jam",
+    "ethereum",
+    "web3"
   ],
   "author": "",
   "license": "MIT",
@@ -25,6 +27,7 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
+    "ethers": "^6.11.0",
     "phaser": "^3.80.0"
   }
 }
