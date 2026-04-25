@@ -5,7 +5,7 @@ import { progression } from '../managers/ProgressionManager';
 import { EffectsManager } from '../managers/EffectsManager';
 import { soundManager } from '../utils/SoundManager';
 import { BackgroundAnimations } from '../utils/BackgroundAnimations';
-import { PHASE_STORIES } from '../data/story';
+import { PHASE_STORIES, getOverseerTaunt, getRandomLoreFragment } from '../data/story';
 
 // Elegant modern fonts
 const TITLE_FONT = '"Space Grotesk", "Segoe UI", sans-serif';
@@ -68,6 +68,8 @@ export class RunnerScene extends Phaser.Scene {
   // Story/phase tracking
   private currentPhaseName: string = '';
   private shownPhaseStory: boolean = false;
+  private lastTauntTime: number = 0;
+  private lastLoreTime: number = 0;
 
   constructor() {
     super({ key: 'RunnerScene' });
@@ -606,6 +608,19 @@ export class RunnerScene extends Phaser.Scene {
     // Update UI
     this.updateUI();
     
+    // Overseer taunts (every 25-40 seconds after 15s)
+    const now = Date.now();
+    if (this.runTime > 15 && now - this.lastTauntTime > 25000 + Math.random() * 15000) {
+      this.showOverseerTaunt();
+      this.lastTauntTime = now;
+    }
+    
+    // Lore fragments (chance every 30s+ when score > 500)
+    if (this.score > 500 && now - this.lastLoreTime > 30000 && Math.random() < 0.002) {
+      this.showLoreFragment();
+      this.lastLoreTime = now;
+    }
+    
     // Update background parallax
     if (this.bgAnimations) {
       this.bgAnimations.update(this.scrollSpeed, delta);
@@ -702,6 +717,125 @@ export class RunnerScene extends Phaser.Scene {
         duration: 500,
         ease: 'Power2',
         onComplete: () => storyContainer.destroy()
+      });
+    });
+  }
+  
+  /**
+   * Show Overseer taunt message
+   */
+  private showOverseerTaunt(): void {
+    const { width } = this.cameras.main;
+    const taunt = getOverseerTaunt();
+    
+    const tauntText = this.add.text(width / 2, 160, `"${taunt}"`, {
+      fontSize: '11px',
+      color: '#FF4444',
+      fontFamily: BODY_FONT,
+      fontStyle: 'italic',
+      wordWrap: { width: 300 },
+      align: 'center'
+    }).setOrigin(0.5).setAlpha(0).setDepth(150);
+    
+    // Overseer label
+    const label = this.add.text(width / 2, 145, '— THE OVERSEER —', {
+      fontSize: '8px',
+      color: '#882222',
+      fontFamily: BODY_FONT,
+      letterSpacing: 2
+    }).setOrigin(0.5).setAlpha(0).setDepth(150);
+    
+    // Animate in
+    this.tweens.add({
+      targets: [tauntText, label],
+      alpha: 0.9,
+      duration: 500,
+      ease: 'Power2'
+    });
+    
+    // Fade out
+    this.time.delayedCall(3500, () => {
+      this.tweens.add({
+        targets: [tauntText, label],
+        alpha: 0,
+        duration: 800,
+        onComplete: () => {
+          tauntText.destroy();
+          label.destroy();
+        }
+      });
+    });
+  }
+  
+  /**
+   * Show lore fragment discovery
+   */
+  private showLoreFragment(): void {
+    const fragment = getRandomLoreFragment(this.score);
+    if (!fragment) return;
+    
+    const { width, height } = this.cameras.main;
+    
+    // Container for the lore popup
+    const container = this.add.container(width / 2, height - 100);
+    container.setDepth(200);
+    
+    // Background
+    const bg = this.add.graphics();
+    bg.fillStyle(0x001122, 0.85);
+    bg.fillRoundedRect(-160, -40, 320, 80, 6);
+    bg.lineStyle(1, 0x00FFFF, 0.5);
+    bg.strokeRoundedRect(-160, -40, 320, 80, 6);
+    container.add(bg);
+    
+    // Category label
+    const category = this.add.text(0, -28, `[ ${fragment.category} ]`, {
+      fontSize: '8px',
+      color: '#00FFFF',
+      fontFamily: BODY_FONT,
+      letterSpacing: 2
+    }).setOrigin(0.5);
+    container.add(category);
+    
+    // Title
+    const title = this.add.text(0, -12, fragment.title, {
+      fontSize: '12px',
+      color: '#FFFFFF',
+      fontFamily: TITLE_FONT,
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    container.add(title);
+    
+    // Text
+    const text = this.add.text(0, 15, fragment.text, {
+      fontSize: '9px',
+      color: '#aaaaaa',
+      fontFamily: BODY_FONT,
+      wordWrap: { width: 300 },
+      align: 'center'
+    }).setOrigin(0.5);
+    container.add(text);
+    
+    // Animate
+    container.setAlpha(0);
+    container.setY(height - 60);
+    
+    this.tweens.add({
+      targets: container,
+      alpha: 1,
+      y: height - 100,
+      duration: 400,
+      ease: 'Back.easeOut'
+    });
+    
+    // Fade out
+    this.time.delayedCall(5000, () => {
+      this.tweens.add({
+        targets: container,
+        alpha: 0,
+        y: height - 120,
+        duration: 600,
+        onComplete: () => container.destroy()
       });
     });
   }

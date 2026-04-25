@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/ARaN/',  // GitHub Pages base path
+  base: '/',  // Root path for Netlify
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

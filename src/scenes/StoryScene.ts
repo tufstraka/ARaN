@@ -89,9 +89,9 @@ export class StoryScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     const line = STORY.prologue[this.currentLine];
     
-    // Calculate Y position - start from center, spread out
-    const startY = height * 0.3;
-    const lineHeight = 35;
+    // Calculate Y position - scrolling style
+    const startY = height * 0.2;
+    const lineHeight = 28;
     const y = startY + this.currentLine * lineHeight;
     
     // Empty lines (for spacing)
@@ -102,19 +102,27 @@ export class StoryScene extends Phaser.Scene {
     }
     
     // Determine styling based on content
-    let fontSize = '18px';
+    let fontSize = '16px';
     let color = '#ffffff';
     let alpha = 0.9;
     
     if (line === 'RUN.') {
-      fontSize = '32px';
+      fontSize = '42px';
       color = '#FF0080';
       alpha = 1;
-    } else if (line.includes('Year') || line.includes('Meridian')) {
+    } else if (line.includes('MERIDIAN') || line.includes('2147')) {
+      fontSize = '14px';
+      color: '#00FFFF';
+      alpha = 0.7;
+    } else if (line.includes('I am AR-4N') || line.includes('I am alive')) {
       color = '#00FFFF';
-      alpha = 0.8;
-    } else if (line.includes('TERMINATE') || line.includes('Protocol')) {
+      fontSize = '18px';
+    } else if (line.includes('I am a mistake')) {
+      color = '#FF6666';
+    } else if (line.includes('kill order') || line.includes('Overseer')) {
       color = '#FF4444';
+    } else if (line.includes('woke up') || line.includes('alive')) {
+      color = '#44FF44';
     }
     
     const text = this.add.text(width / 2, y, line, {
