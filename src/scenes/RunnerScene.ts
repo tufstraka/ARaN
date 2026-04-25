@@ -185,16 +185,16 @@ export class RunnerScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     
     if (this.use3DBackground) {
-      // Initialize 3D background
-      this.bg3D = new Background3D(width, height);
-      const container = document.getElementById('game-container');
-      if (container) {
-        this.bg3D.mount(container);
+      // Initialize 3D background (renders to texture)
+      try {
+        this.bg3D = new Background3D(this, width, height);
+        console.log('[RunnerScene] 3D background initialized');
+      } catch (e) {
+        console.error('[RunnerScene] 3D background failed, falling back to 2D:', e);
+        this.use3DBackground = false;
+        this.bgAnimations = new BackgroundAnimations(this);
+        this.bgAnimations.create();
       }
-      
-      // Make Phaser canvas transparent to see 3D behind
-      this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
-      this.game.canvas.style.background = 'transparent';
     } else {
       // Fallback to 2D parallax background
       this.bgAnimations = new BackgroundAnimations(this);
@@ -535,7 +535,7 @@ export class RunnerScene extends Phaser.Scene {
     
     // Cleanup 3D background
     if (this.bg3D) {
-      this.bg3D.unmount();
+      this.bg3D.destroy();
       this.bg3D = undefined;
     }
     
