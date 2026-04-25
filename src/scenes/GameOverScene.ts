@@ -2,9 +2,9 @@ import Phaser from 'phaser';
 import { COLORS, UPGRADES } from '../config/gameConfig';
 import { progression } from '../managers/ProgressionManager';
 
-// Fun fonts
-const TITLE_FONT = '"Press Start 2P", "Courier New", monospace';
-const BODY_FONT = '"VT323", "Courier New", monospace';
+// Elegant modern fonts
+const TITLE_FONT = '"Space Grotesk", "Segoe UI", sans-serif';
+const BODY_FONT = '"JetBrains Mono", "Consolas", monospace';
 
 interface GameOverData {
   score: number;
@@ -39,35 +39,17 @@ export class GameOverScene extends Phaser.Scene {
     const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.8);
     overlay.setOrigin(0);
     
-    // Title with glitch effect
+    // Title - clean and elegant
     const titleText = this.runData.isNewBest ? '🎉 NEW BEST! 🎉' : 'SYSTEM FAILURE';
     const titleColor = this.runData.isNewBest ? '#FFD700' : '#FF0080';
     
     const title = this.add.text(width / 2, 100, titleText, {
-      fontSize: this.runData.isNewBest ? '24px' : '20px',
+      fontSize: '36px',
       color: titleColor,
       fontFamily: TITLE_FONT,
-      stroke: '#000',
-      strokeThickness: 4,
-      shadow: {
-        offsetX: 3,
-        offsetY: 3,
-        color: this.runData.isNewBest ? '#FF0080' : '#00FFFF',
-        blur: 0,
-        fill: true
-      }
+      fontStyle: 'bold'
     }).setOrigin(0.5);
-    
-    // Shake animation for failure
-    if (!this.runData.isNewBest) {
-      this.tweens.add({
-        targets: title,
-        x: title.x + Phaser.Math.Between(-3, 3),
-        duration: 50,
-        yoyo: true,
-        repeat: 5
-      });
-    }
+    title.setShadow(0, 0, titleColor, 15, false, true);
     
     // Stats panel
     const panelY = 180;
@@ -81,57 +63,58 @@ export class GameOverScene extends Phaser.Scene {
     
     // Score
     this.add.text(width / 2 - 180, panelY + 20, 'SCORE', {
-      fontSize: '10px',
-      color: '#888',
-      fontFamily: TITLE_FONT
+      fontSize: '12px',
+      color: '#666',
+      fontFamily: BODY_FONT
     });
     this.add.text(width / 2 + 180, panelY + 20, this.runData.score.toString(), {
-      fontSize: '36px',
+      fontSize: '32px',
       color: '#00FFFF',
-      fontFamily: BODY_FONT
+      fontFamily: TITLE_FONT,
+      fontStyle: 'bold'
     }).setOrigin(1, 0);
     
     // Time
     const mins = Math.floor(this.runData.time / 60);
     const secs = Math.floor(this.runData.time % 60);
     this.add.text(width / 2 - 180, panelY + 70, 'TIME', {
-      fontSize: '10px',
-      color: '#888',
-      fontFamily: TITLE_FONT
+      fontSize: '12px',
+      color: '#666',
+      fontFamily: BODY_FONT
     });
     this.add.text(width / 2 + 180, panelY + 70, `${mins}:${secs.toString().padStart(2, '0')}`, {
-      fontSize: '28px',
+      fontSize: '24px',
       color: '#FFFFFF',
       fontFamily: BODY_FONT
     }).setOrigin(1, 0);
     
     // Gears collected
     this.add.text(width / 2 - 180, panelY + 110, 'GEARS', {
-      fontSize: '10px',
-      color: '#888',
-      fontFamily: TITLE_FONT
+      fontSize: '12px',
+      color: '#666',
+      fontFamily: BODY_FONT
     });
     this.add.text(width / 2 + 180, panelY + 110, `+${this.runData.gears} ⚙️`, {
-      fontSize: '28px',
+      fontSize: '24px',
       color: '#F39C12',
       fontFamily: BODY_FONT
     }).setOrigin(1, 0);
     
     // Max combo
-    this.add.text(width / 2 - 180, panelY + 150, 'COMBO', {
-      fontSize: '10px',
-      color: '#888',
-      fontFamily: TITLE_FONT
+    this.add.text(width / 2 - 180, panelY + 150, 'BEST COMBO', {
+      fontSize: '12px',
+      color: '#666',
+      fontFamily: BODY_FONT
     });
     this.add.text(width / 2 + 180, panelY + 150, `${this.runData.maxCombo}x`, {
-      fontSize: '28px',
+      fontSize: '24px',
       color: '#FF0080',
       fontFamily: BODY_FONT
     }).setOrigin(1, 0);
     
     // Total gears
     this.add.text(width / 2, panelY + panelHeight + 30, `Total Gears: ${progression.currency} ⚙️`, {
-      fontSize: '24px',
+      fontSize: '18px',
       color: '#F39C12',
       fontFamily: BODY_FONT
     }).setOrigin(0.5);
@@ -151,13 +134,13 @@ export class GameOverScene extends Phaser.Scene {
     
     // Menu (smaller, below)
     this.add.text(width / 2, buttonY + 80, '[ MENU ]', {
-      fontSize: '10px',
-      color: '#666',
-      fontFamily: TITLE_FONT
+      fontSize: '14px',
+      color: '#555',
+      fontFamily: BODY_FONT
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.scene.start('MenuScene'))
       .on('pointerover', function(this: Phaser.GameObjects.Text) { this.setColor('#FFF'); })
-      .on('pointerout', function(this: Phaser.GameObjects.Text) { this.setColor('#666'); });
+      .on('pointerout', function(this: Phaser.GameObjects.Text) { this.setColor('#555'); });
     
     // Quick restart with Space
     this.input.keyboard?.on('keydown-SPACE', () => {
@@ -165,20 +148,11 @@ export class GameOverScene extends Phaser.Scene {
     });
     
     // Touch anywhere text
-    const hintText = this.add.text(width / 2, height - 40, '⬆️ SPACE to retry ⬆️', {
-      fontSize: '18px',
-      color: '#666',
+    this.add.text(width / 2, height - 40, 'Press SPACE to retry', {
+      fontSize: '12px',
+      color: '#444',
       fontFamily: BODY_FONT
     }).setOrigin(0.5);
-    
-    // Blink animation
-    this.tweens.add({
-      targets: hintText,
-      alpha: 0.3,
-      duration: 800,
-      yoyo: true,
-      repeat: -1
-    });
   }
 
   private createButton(x: number, y: number, text: string, color: number, callback: () => void): void {
@@ -190,9 +164,10 @@ export class GameOverScene extends Phaser.Scene {
     btn.setPosition(x, y);
     
     const label = this.add.text(x, y, text, {
-      fontSize: '12px',
+      fontSize: '16px',
       color: '#FFFFFF',
-      fontFamily: TITLE_FONT
+      fontFamily: TITLE_FONT,
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     
     // Make interactive

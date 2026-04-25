@@ -5,9 +5,9 @@ import { soundManager } from '../utils/SoundManager';
 import { web3Manager } from '../utils/Web3Manager';
 import { BackgroundAnimations } from '../utils/BackgroundAnimations';
 
-// Fun font for titles - loaded via CSS
-const TITLE_FONT = '"Press Start 2P", "Courier New", monospace';
-const BODY_FONT = '"VT323", "Courier New", monospace';
+// Elegant modern fonts
+const TITLE_FONT = '"Space Grotesk", "Segoe UI", sans-serif';
+const BODY_FONT = '"JetBrains Mono", "Consolas", monospace';
 
 export class MenuScene extends Phaser.Scene {
   private walletButton?: Phaser.GameObjects.Text;
@@ -57,114 +57,52 @@ export class MenuScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     const isMobile = width < 600;
     
-    // Robot icon with glow effect
+    // Robot icon with subtle glow
     const robotY = isMobile ? 50 : 70;
     const robotContainer = this.add.container(width / 2, robotY);
     
-    // Glow behind robot
+    // Subtle glow behind robot
     const glow = this.add.graphics();
-    glow.fillStyle(COLORS.NEON_CYAN, 0.15);
-    glow.fillCircle(0, 0, isMobile ? 35 : 50);
+    glow.fillStyle(COLORS.NEON_CYAN, 0.1);
+    glow.fillCircle(0, 0, isMobile ? 30 : 40);
     robotContainer.add(glow);
     
     const robot = this.add.text(0, 0, '🤖', {
-      fontSize: isMobile ? '48px' : '72px'
+      fontSize: isMobile ? '48px' : '64px'
     }).setOrigin(0.5);
     robotContainer.add(robot);
     
-    // Playful bounce + rotation
+    // Gentle float animation
     this.tweens.add({
       targets: robotContainer,
-      y: robotY - 8,
-      duration: 600,
+      y: robotY - 6,
+      duration: 2000,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
     
-    this.tweens.add({
-      targets: robot,
-      angle: { from: -5, to: 5 },
-      duration: 400,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-    
-    // Glow pulse
-    this.tweens.add({
-      targets: glow,
-      alpha: 0.3,
-      scale: 1.2,
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-    
-    // Title - ARAN in fun pixel font
-    const titleY = isMobile ? 110 : 165;
+    // Title - ARAN in elegant font
+    const titleY = isMobile ? 110 : 155;
     const title = this.add.text(width / 2, titleY, 'ARAN', {
-      fontSize: isMobile ? '36px' : '56px',
+      fontSize: isMobile ? '42px' : '64px',
       color: '#00FFFF',
       fontFamily: TITLE_FONT,
-      stroke: '#004444',
-      strokeThickness: isMobile ? 4 : 6,
-      shadow: {
-        offsetX: 3,
-        offsetY: 3,
-        color: '#FF0080',
-        blur: 0,
-        fill: true
-      }
+      fontStyle: 'bold',
+      letterSpacing: 12
     }).setOrigin(0.5);
     
-    // Glitch effect on title
-    this.time.addEvent({
-      delay: 3000,
-      callback: () => this.glitchText(title),
-      loop: true
-    });
+    // Subtle glow effect
+    title.setShadow(0, 0, '#00FFFF', 15, false, true);
     
-    // Subtitle with typewriter effect
-    const subY = isMobile ? 155 : 225;
-    const subText = 'FACTORY ESCAPE';
-    const subtitle = this.add.text(width / 2, subY, '', {
-      fontSize: isMobile ? '10px' : '14px',
+    // Subtitle
+    const subY = isMobile ? 155 : 215;
+    this.add.text(width / 2, subY, 'FACTORY ESCAPE', {
+      fontSize: isMobile ? '10px' : '12px',
       color: '#FF0080',
-      fontFamily: TITLE_FONT,
-      letterSpacing: isMobile ? 2 : 4
-    }).setOrigin(0.5);
-    
-    // Typewriter animation
-    let charIndex = 0;
-    this.time.addEvent({
-      delay: 80,
-      repeat: subText.length - 1,
-      callback: () => {
-        charIndex++;
-        subtitle.setText(subText.substring(0, charIndex));
-      }
-    });
-  }
-  
-  private glitchText(text: Phaser.GameObjects.Text): void {
-    const originalX = text.x;
-    const originalColor = text.style.color;
-    
-    // Quick glitch sequence
-    this.tweens.add({
-      targets: text,
-      x: originalX + Phaser.Math.Between(-5, 5),
-      duration: 50,
-      yoyo: true,
-      repeat: 2,
-      onStart: () => text.setTint(0xFF0080),
-      onComplete: () => {
-        text.setX(originalX);
-        text.clearTint();
-      }
-    });
+      fontFamily: BODY_FONT,
+      letterSpacing: isMobile ? 4 : 8
+    }).setOrigin(0.5).setAlpha(0.8);
   }
 
   private createStatsDisplay(): void {
@@ -258,30 +196,19 @@ export class MenuScene extends Phaser.Scene {
       this.showStatsModal();
     });
     
-    // How to play - adjust for mobile (now with fun animation)
+    // How to play - minimal
     const instructY = secondaryY + (isMobile ? 70 : 60);
-    const instructSize = isMobile ? '20px' : '24px';
     
-    const instructText = this.add.text(width / 2, instructY, '⬆️ TAP or SPACE ⬇️', {
-      fontSize: instructSize,
-      color: '#00FFFF',
+    const instructText = this.add.text(width / 2, instructY, 'TAP or SPACE to flip gravity', {
+      fontSize: '14px',
+      color: '#666',
       fontFamily: BODY_FONT
     }).setOrigin(0.5);
     
-    // Pulsing instruction
-    this.tweens.add({
-      targets: instructText,
-      alpha: 0.5,
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-    
     if (!isMobile || height > 500) {
-      this.add.text(width / 2, instructY + 30, 'Flip gravity to survive!', {
-        fontSize: '16px',
-        color: '#888',
+      this.add.text(width / 2, instructY + 25, 'Survive as long as you can', {
+        fontSize: '12px',
+        color: '#444',
         fontFamily: BODY_FONT
       }).setOrigin(0.5);
     }
@@ -295,11 +222,12 @@ export class MenuScene extends Phaser.Scene {
     btn.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12);
     btn.setPosition(x, y);
     
-    const fontSize = btnHeight > 55 ? '24px' : '20px';
+    const fontSize = btnHeight > 55 ? '20px' : '18px';
     const label = this.add.text(x, y, text, {
       fontSize,
       color: '#FFFFFF',
-      fontFamily: TITLE_FONT
+      fontFamily: TITLE_FONT,
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     
     const hitArea = this.add.rectangle(x, y, btnWidth + 20, btnHeight + 20, 0x000000, 0);
@@ -334,11 +262,11 @@ export class MenuScene extends Phaser.Scene {
     bg.strokeRoundedRect(-btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 8);
     bg.setPosition(x, y);
     
-    const fontSize = btnHeight > 45 ? '12px' : '10px';
+    const fontSize = btnHeight > 45 ? '14px' : '12px';
     const btn = this.add.text(x, y, text, {
       fontSize,
       color: '#AAA',
-      fontFamily: TITLE_FONT
+      fontFamily: BODY_FONT
     }).setOrigin(0.5);
     
     const hitArea = this.add.rectangle(x, y, btnWidth + 10, btnHeight + 10, 0x000000, 0);

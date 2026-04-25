@@ -6,9 +6,9 @@ import { EffectsManager } from '../managers/EffectsManager';
 import { soundManager } from '../utils/SoundManager';
 import { BackgroundAnimations } from '../utils/BackgroundAnimations';
 
-// Fun fonts
-const TITLE_FONT = '"Press Start 2P", "Courier New", monospace';
-const BODY_FONT = '"VT323", "Courier New", monospace';
+// Elegant modern fonts
+const TITLE_FONT = '"Space Grotesk", "Segoe UI", sans-serif';
+const BODY_FONT = '"JetBrains Mono", "Consolas", monospace';
 
 /**
  * Main endless runner game scene
@@ -288,47 +288,40 @@ export class RunnerScene extends Phaser.Scene {
   private createUI(): void {
     const { width } = this.cameras.main;
     
-    // Score (big, prominent) - using fun font
+    // Score - clean and prominent
     this.scoreText = this.add.text(width / 2, 80, '0', {
-      fontSize: '36px',
+      fontSize: '48px',
       color: '#00FFFF',
       fontFamily: TITLE_FONT,
-      stroke: '#000',
-      strokeThickness: 4,
-      shadow: {
-        offsetX: 2,
-        offsetY: 2,
-        color: '#FF0080',
-        blur: 0,
-        fill: true
-      }
+      fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(100);
+    this.scoreText.setShadow(0, 0, '#00FFFF', 10, false, true);
     
-    // Combo multiplier - VT323 for readability
+    // Combo multiplier
     this.comboText = this.add.text(width / 2, 125, '', {
-      fontSize: '28px',
+      fontSize: '20px',
       color: '#FF0080',
       fontFamily: BODY_FONT
     }).setOrigin(0.5).setDepth(100);
     
     // Timer
     this.timerText = this.add.text(20, 70, '00:00', {
-      fontSize: '24px',
+      fontSize: '18px',
       color: '#FFFFFF',
       fontFamily: BODY_FONT
     }).setDepth(100);
     
     // Phase indicator
     this.phaseText = this.add.text(width - 20, 70, 'BOOT SEQUENCE', {
-      fontSize: '10px',
+      fontSize: '12px',
       color: '#39FF14',
-      fontFamily: TITLE_FONT
+      fontFamily: BODY_FONT
     }).setOrigin(1, 0).setDepth(100);
     
     // Gears count
-    this.add.text(20, 100, '⚙️', { fontSize: '24px' }).setDepth(100);
-    this.add.text(50, 100, '0', {
-      fontSize: '28px',
+    this.add.text(20, 95, '⚙️', { fontSize: '20px' }).setDepth(100);
+    this.add.text(45, 95, '0', {
+      fontSize: '20px',
       color: '#F39C12',
       fontFamily: BODY_FONT
     }).setDepth(100).setName('gearsText');
@@ -626,10 +619,10 @@ export class RunnerScene extends Phaser.Scene {
     // Update UI
     this.updateUI();
     
-    // Parallax scrolling
-    this.bgLayers.forEach((layer, i) => {
-      layer.tilePositionX += this.scrollSpeed * (0.1 + i * 0.1) * (delta / 1000);
-    });
+    // Update background parallax
+    if (this.bgAnimations) {
+      this.bgAnimations.update(this.scrollSpeed, delta);
+    }
   }
 
   private updateUI(): void {

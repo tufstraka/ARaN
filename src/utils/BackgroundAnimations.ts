@@ -2,524 +2,293 @@ import Phaser from 'phaser';
 import { COLORS } from '../config/gameConfig';
 
 /**
- * Animated Machine Background Elements
- * Creates fun, playful factory-themed SVG-style animations
+ * Minimal, Elegant Factory Background
+ * Clean parallax layers with subtle movement
  */
 export class BackgroundAnimations {
   private scene: Phaser.Scene;
-  private elements: Phaser.GameObjects.GameObject[] = [];
+  private layers: Phaser.GameObjects.TileSprite[] = [];
+  private particles: Phaser.GameObjects.Graphics[] = [];
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
   
   /**
-   * Create all background animations
+   * Create clean, minimal background
    */
   create(): void {
-    const { width, height } = this.scene.cameras.main;
-    
-    // Create layered animated elements
-    this.createSteamVents();
-    this.createAnimatedPipes();
-    this.createSpinningCogs();
-    this.createMovingPistons();
-    this.createConveyorBelts();
-    this.createFloatingBolts();
-    this.createElectricSparks();
-    this.createScanlines();
+    this.createGradient();
+    this.createFactoryLayers();
+    this.createSubtleParticles();
+    this.createAmbientGlow();
   }
   
   /**
-   * Steam vents that periodically puff
+   * Smooth gradient background
    */
-  private createSteamVents(): void {
+  private createGradient(): void {
     const { width, height } = this.scene.cameras.main;
-    const ventPositions = [
-      { x: width * 0.1, y: height - 60, direction: -1 },
-      { x: width * 0.85, y: 60, direction: 1 },
-      { x: width * 0.5, y: height - 60, direction: -1 },
-    ];
     
-    ventPositions.forEach((pos, i) => {
-      // Vent pipe
-      const vent = this.scene.add.graphics();
-      vent.fillStyle(0x4a5568, 0.8);
-      vent.fillRoundedRect(-15, 0, 30, 25, 4);
-      vent.fillStyle(0x2d3748);
-      vent.fillCircle(0, pos.direction > 0 ? 25 : 0, 12);
-      vent.setPosition(pos.x, pos.y);
-      vent.setDepth(5);
-      
-      // Steam particles container
-      const steamContainer = this.scene.add.container(pos.x, pos.y);
-      steamContainer.setDepth(4);
-      
-      // Create steam puff animation
-      this.scene.time.addEvent({
-        delay: 2000 + i * 700,
-        callback: () => this.createSteamPuff(steamContainer, pos.direction),
-        loop: true
-      });
-      
-      this.elements.push(vent, steamContainer);
-    });
-  }
-  
-  private createSteamPuff(container: Phaser.GameObjects.Container, direction: number): void {
-    for (let i = 0; i < 5; i++) {
-      const cloud = this.scene.add.graphics();
-      cloud.fillStyle(0xFFFFFF, 0.3);
-      const size = 8 + Math.random() * 12;
-      cloud.fillCircle(0, 0, size);
-      cloud.setPosition(
-        (Math.random() - 0.5) * 20,
-        direction * 10
-      );
-      cloud.setAlpha(0);
-      
-      container.add(cloud);
-      
-      this.scene.tweens.add({
-        targets: cloud,
-        y: direction * (50 + Math.random() * 30),
-        x: cloud.x + (Math.random() - 0.5) * 40,
-        alpha: { from: 0.4, to: 0 },
-        scale: { from: 0.5, to: 1.5 },
-        duration: 800 + Math.random() * 400,
-        delay: i * 50,
-        onComplete: () => cloud.destroy()
-      });
-    }
+    const bg = this.scene.add.graphics();
+    bg.setDepth(-10);
+    
+    // Deep industrial gradient - dark blue to near black
+    bg.fillGradientStyle(
+      0x1a1a2e, 0x1a1a2e,  // Top: dark blue-purple
+      0x0a0a12, 0x0a0a12   // Bottom: near black
+    );
+    bg.fillRect(0, 0, width, height);
   }
   
   /**
-   * Animated pipes with flowing liquid effect
+   * Clean factory silhouette layers with parallax
    */
-  private createAnimatedPipes(): void {
+  private createFactoryLayers(): void {
     const { width, height } = this.scene.cameras.main;
     
-    // Horizontal pipe across top
-    const pipe1 = this.createPipe(0, 80, width, true);
+    // Far layer - distant city/factory skyline
+    const farLayer = this.createSilhouetteLayer(
+      height * 0.5,  // Y position
+      0.3,           // Parallax speed
+      0x12121f,      // Color - very dark
+      0.6,           // Alpha
+      'far'
+    );
     
-    // Vertical pipe on left
-    const pipe2 = this.createPipe(50, 80, height - 140, false);
+    // Mid layer - closer buildings
+    const midLayer = this.createSilhouetteLayer(
+      height * 0.6,
+      0.5,
+      0x1a1a2e,
+      0.7,
+      'mid'
+    );
     
-    // Diagonal connector
-    const pipe3 = this.createDiagonalPipe(50, height - 60, width * 0.3, height * 0.4);
+    // Near layer - closest structures
+    const nearLayer = this.createSilhouetteLayer(
+      height * 0.75,
+      0.8,
+      0x252540,
+      0.8,
+      'near'
+    );
     
-    this.elements.push(pipe1, pipe2, pipe3);
+    this.layers.push(farLayer, midLayer, nearLayer);
   }
   
-  private createPipe(x: number, y: number, length: number, horizontal: boolean): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(x, y);
-    container.setDepth(3);
+  /**
+   * Create a factory silhouette layer
+   */
+  private createSilhouetteLayer(
+    baseY: number,
+    parallaxSpeed: number,
+    color: number,
+    alpha: number,
+    type: 'far' | 'mid' | 'near'
+  ): Phaser.GameObjects.TileSprite {
+    const { width, height } = this.scene.cameras.main;
     
-    // Pipe body
-    const pipe = this.scene.add.graphics();
-    pipe.fillStyle(0x4a5568, 0.6);
+    // Create a texture for the silhouette
+    const textureName = `factory_${type}`;
+    const textureWidth = 512;
+    const textureHeight = 200;
     
-    if (horizontal) {
-      pipe.fillRoundedRect(0, -10, length, 20, 5);
-      // Rivets
-      for (let rx = 20; rx < length; rx += 60) {
-        pipe.fillStyle(0x9CA3AF, 0.8);
-        pipe.fillCircle(rx, -5, 3);
-        pipe.fillCircle(rx, 5, 3);
-      }
+    // Generate factory silhouette texture
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(color);
+    
+    if (type === 'far') {
+      // Distant smokestacks and buildings
+      this.drawDistantFactory(graphics, textureWidth, textureHeight);
+    } else if (type === 'mid') {
+      // Medium buildings with chimneys
+      this.drawMidFactory(graphics, textureWidth, textureHeight);
     } else {
-      pipe.fillRoundedRect(-10, 0, 20, length, 5);
-      for (let ry = 20; ry < length; ry += 60) {
-        pipe.fillStyle(0x9CA3AF, 0.8);
-        pipe.fillCircle(-5, ry, 3);
-        pipe.fillCircle(5, ry, 3);
-      }
+      // Close industrial structures
+      this.drawNearFactory(graphics, textureWidth, textureHeight);
     }
     
-    container.add(pipe);
+    graphics.generateTexture(textureName, textureWidth, textureHeight);
+    graphics.destroy();
     
-    // Flowing liquid effect
-    const liquidMask = this.scene.add.graphics();
-    liquidMask.fillStyle(COLORS.NEON_CYAN, 0.3);
+    // Create tile sprite
+    const layer = this.scene.add.tileSprite(
+      0, baseY,
+      width + textureWidth,
+      textureHeight,
+      textureName
+    );
+    layer.setOrigin(0, 0);
+    layer.setAlpha(alpha);
+    layer.setDepth(-5 + (type === 'far' ? 0 : type === 'mid' ? 1 : 2));
+    layer.setData('parallaxSpeed', parallaxSpeed);
     
-    const liquidLength = horizontal ? 40 : 40;
-    let liquidPos = 0;
-    
-    this.scene.time.addEvent({
-      delay: 50,
-      callback: () => {
-        liquidMask.clear();
-        liquidMask.fillStyle(COLORS.NEON_CYAN, 0.2);
-        
-        if (horizontal) {
-          liquidMask.fillRect(liquidPos, -6, liquidLength, 12);
-          liquidPos = (liquidPos + 5) % length;
-        } else {
-          liquidMask.fillRect(-6, liquidPos, 12, liquidLength);
-          liquidPos = (liquidPos + 5) % length;
+    return layer;
+  }
+  
+  private drawDistantFactory(g: Phaser.GameObjects.Graphics, w: number, h: number): void {
+    // Distant skyline with smokestacks
+    let x = 0;
+    while (x < w) {
+      const buildingW = 30 + Math.random() * 50;
+      const buildingH = 40 + Math.random() * 80;
+      
+      // Building
+      g.fillRect(x, h - buildingH, buildingW, buildingH);
+      
+      // Occasional smokestack
+      if (Math.random() > 0.6) {
+        const stackW = 8;
+        const stackH = 30 + Math.random() * 40;
+        g.fillRect(x + buildingW / 2 - stackW / 2, h - buildingH - stackH, stackW, stackH);
+      }
+      
+      x += buildingW + 10 + Math.random() * 30;
+    }
+  }
+  
+  private drawMidFactory(g: Phaser.GameObjects.Graphics, w: number, h: number): void {
+    let x = 0;
+    while (x < w) {
+      const buildingW = 40 + Math.random() * 60;
+      const buildingH = 60 + Math.random() * 100;
+      
+      // Main building
+      g.fillRect(x, h - buildingH, buildingW, buildingH);
+      
+      // Roof detail
+      if (Math.random() > 0.5) {
+        g.fillRect(x + 5, h - buildingH - 15, buildingW - 10, 15);
+      }
+      
+      // Windows (subtle rectangles)
+      g.fillStyle(0x0a0a12, 0.5);
+      for (let wy = h - buildingH + 20; wy < h - 20; wy += 25) {
+        for (let wx = x + 8; wx < x + buildingW - 8; wx += 15) {
+          g.fillRect(wx, wy, 8, 12);
         }
-      },
-      loop: true
-    });
-    
-    container.add(liquidMask);
-    
-    return container;
-  }
-  
-  private createDiagonalPipe(x1: number, y1: number, x2: number, y2: number): Phaser.GameObjects.Graphics {
-    const pipe = this.scene.add.graphics();
-    pipe.setDepth(2);
-    
-    pipe.lineStyle(18, 0x4a5568, 0.5);
-    pipe.lineBetween(x1, y1, x2, y2);
-    
-    pipe.lineStyle(12, 0x374151, 0.4);
-    pipe.lineBetween(x1, y1, x2, y2);
-    
-    return pipe;
-  }
-  
-  /**
-   * Spinning cogs of various sizes
-   */
-  private createSpinningCogs(): void {
-    const { width, height } = this.scene.cameras.main;
-    
-    const cogConfigs = [
-      { x: width * 0.15, y: height * 0.25, size: 45, speed: 8000, clockwise: true, teeth: 10 },
-      { x: width * 0.15 + 58, y: height * 0.25 + 35, size: 30, speed: 5300, clockwise: false, teeth: 8 },
-      { x: width * 0.8, y: height * 0.7, size: 55, speed: 10000, clockwise: false, teeth: 12 },
-      { x: width * 0.8 + 70, y: height * 0.7, size: 35, speed: 6300, clockwise: true, teeth: 8 },
-      { x: width * 0.5, y: height * 0.15, size: 25, speed: 4000, clockwise: true, teeth: 6 },
-      { x: width * 0.35, y: height * 0.8, size: 40, speed: 7000, clockwise: false, teeth: 10 },
-    ];
-    
-    cogConfigs.forEach(config => {
-      const cog = this.createCog(config.size, config.teeth);
-      cog.setPosition(config.x, config.y);
-      cog.setDepth(2);
-      
-      this.scene.tweens.add({
-        targets: cog,
-        angle: config.clockwise ? 360 : -360,
-        duration: config.speed,
-        repeat: -1,
-        ease: 'Linear'
-      });
-      
-      this.elements.push(cog);
-    });
-  }
-  
-  private createCog(size: number, teeth: number): Phaser.GameObjects.Graphics {
-    const cog = this.scene.add.graphics();
-    
-    // Outer ring with teeth
-    cog.fillStyle(COLORS.STEEL, 0.25);
-    cog.fillCircle(0, 0, size);
-    
-    // Teeth
-    for (let i = 0; i < teeth; i++) {
-      const angle = (i / teeth) * Math.PI * 2;
-      const toothSize = size * 0.25;
-      const tx = Math.cos(angle) * size;
-      const ty = Math.sin(angle) * size;
-      
-      cog.fillStyle(COLORS.STEEL, 0.3);
-      cog.save();
-      cog.fillRect(tx - toothSize / 2, ty - toothSize / 2, toothSize, toothSize);
-      cog.restore();
-    }
-    
-    // Inner ring
-    cog.fillStyle(COLORS.DARK_METAL, 0.3);
-    cog.fillCircle(0, 0, size * 0.6);
-    
-    // Center hole
-    cog.fillStyle(0x1a1a2e, 0.8);
-    cog.fillCircle(0, 0, size * 0.2);
-    
-    // Spokes
-    cog.lineStyle(3, COLORS.STEEL, 0.2);
-    for (let i = 0; i < 4; i++) {
-      const angle = (i / 4) * Math.PI * 2;
-      cog.lineBetween(
-        Math.cos(angle) * size * 0.25,
-        Math.sin(angle) * size * 0.25,
-        Math.cos(angle) * size * 0.55,
-        Math.sin(angle) * size * 0.55
-      );
-    }
-    
-    return cog;
-  }
-  
-  /**
-   * Moving pistons that pump up and down
-   */
-  private createMovingPistons(): void {
-    const { width, height } = this.scene.cameras.main;
-    
-    const pistonConfigs = [
-      { x: width * 0.25, y: height - 60, size: 20, range: 40, speed: 600, phase: 0 },
-      { x: width * 0.25 + 50, y: height - 60, size: 20, range: 40, speed: 600, phase: 300 },
-      { x: width * 0.7, y: 60, size: 25, range: 50, speed: 800, phase: 200, flip: true },
-    ];
-    
-    pistonConfigs.forEach(config => {
-      const piston = this.createPiston(config.size, config.flip);
-      piston.setPosition(config.x, config.y);
-      piston.setDepth(4);
-      
-      this.scene.tweens.add({
-        targets: piston,
-        y: config.y + (config.flip ? config.range : -config.range),
-        duration: config.speed,
-        yoyo: true,
-        repeat: -1,
-        delay: config.phase,
-        ease: 'Sine.easeInOut'
-      });
-      
-      this.elements.push(piston);
-    });
-  }
-  
-  private createPiston(size: number, flip: boolean = false): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(0, 0);
-    
-    // Piston shaft
-    const shaft = this.scene.add.graphics();
-    shaft.fillStyle(0x6B7280, 0.7);
-    shaft.fillRect(-size / 4, flip ? 0 : -size * 2, size / 2, size * 2);
-    
-    // Piston head
-    const head = this.scene.add.graphics();
-    head.fillStyle(0x9CA3AF, 0.8);
-    head.fillRoundedRect(-size / 2, flip ? -size / 2 : -size * 2 - size / 2, size, size, 4);
-    
-    // Highlight
-    head.fillStyle(0xFFFFFF, 0.2);
-    head.fillRect(-size / 2 + 3, flip ? -size / 2 + 3 : -size * 2 - size / 2 + 3, size - 6, 4);
-    
-    container.add([shaft, head]);
-    
-    return container;
-  }
-  
-  /**
-   * Conveyor belts with moving segments
-   */
-  private createConveyorBelts(): void {
-    const { width, height } = this.scene.cameras.main;
-    
-    // Bottom conveyor hint
-    const conveyor = this.createConveyor(width * 0.6, height - 45, 150);
-    this.elements.push(conveyor);
-  }
-  
-  private createConveyor(x: number, y: number, length: number): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(x, y);
-    container.setDepth(3);
-    
-    // Belt base
-    const base = this.scene.add.graphics();
-    base.fillStyle(0x374151, 0.6);
-    base.fillRoundedRect(0, -8, length, 16, 8);
-    container.add(base);
-    
-    // Rolling segments
-    const segmentWidth = 15;
-    const segments: Phaser.GameObjects.Graphics[] = [];
-    
-    for (let i = 0; i < Math.ceil(length / segmentWidth) + 2; i++) {
-      const segment = this.scene.add.graphics();
-      segment.fillStyle(0x1F2937, 0.8);
-      segment.fillRect(0, -6, segmentWidth - 3, 12);
-      segment.setPosition(i * segmentWidth - segmentWidth, 0);
-      segments.push(segment);
-      container.add(segment);
-    }
-    
-    // Animate segments
-    this.scene.time.addEvent({
-      delay: 50,
-      callback: () => {
-        segments.forEach(seg => {
-          seg.x -= 2;
-          if (seg.x < -segmentWidth) {
-            seg.x = length;
-          }
-        });
-      },
-      loop: true
-    });
-    
-    // End wheels
-    const wheel1 = this.scene.add.graphics();
-    wheel1.fillStyle(0x6B7280, 0.8);
-    wheel1.fillCircle(8, 0, 10);
-    wheel1.fillStyle(0x374151);
-    wheel1.fillCircle(8, 0, 5);
-    container.add(wheel1);
-    
-    const wheel2 = this.scene.add.graphics();
-    wheel2.fillStyle(0x6B7280, 0.8);
-    wheel2.fillCircle(length - 8, 0, 10);
-    wheel2.fillStyle(0x374151);
-    wheel2.fillCircle(length - 8, 0, 5);
-    container.add(wheel2);
-    
-    // Animate wheel rotation
-    this.scene.tweens.add({
-      targets: [wheel1, wheel2],
-      angle: 360,
-      duration: 1000,
-      repeat: -1,
-      ease: 'Linear'
-    });
-    
-    return container;
-  }
-  
-  /**
-   * Floating bolts and nuts
-   */
-  private createFloatingBolts(): void {
-    const { width, height } = this.scene.cameras.main;
-    
-    for (let i = 0; i < 8; i++) {
-      const bolt = this.createBolt();
-      bolt.setPosition(
-        Phaser.Math.Between(50, width - 50),
-        Phaser.Math.Between(100, height - 100)
-      );
-      bolt.setDepth(1);
-      bolt.setAlpha(0.3);
-      
-      // Gentle floating animation
-      this.scene.tweens.add({
-        targets: bolt,
-        y: bolt.y + Phaser.Math.Between(-20, 20),
-        x: bolt.x + Phaser.Math.Between(-10, 10),
-        angle: Phaser.Math.Between(-30, 30),
-        duration: 3000 + Math.random() * 2000,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-      });
-      
-      this.elements.push(bolt);
-    }
-  }
-  
-  private createBolt(): Phaser.GameObjects.Graphics {
-    const bolt = this.scene.add.graphics();
-    
-    if (Math.random() > 0.5) {
-      // Hex bolt
-      bolt.fillStyle(0x9CA3AF, 0.8);
-      const points = [];
-      for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * Math.PI * 2 - Math.PI / 6;
-        points.push({
-          x: Math.cos(angle) * 8,
-          y: Math.sin(angle) * 8
-        });
       }
-      bolt.fillPoints(points, true);
-      bolt.fillStyle(0x6B7280);
-      bolt.fillCircle(0, 0, 4);
-    } else {
-      // Nut
-      bolt.fillStyle(0xD97706, 0.8);
-      bolt.fillCircle(0, 0, 6);
-      bolt.fillStyle(0x1a1a2e);
-      bolt.fillCircle(0, 0, 3);
+      g.fillStyle(g.defaultFillColor);
+      
+      x += buildingW + 20 + Math.random() * 40;
     }
-    
-    return bolt;
+  }
+  
+  private drawNearFactory(g: Phaser.GameObjects.Graphics, w: number, h: number): void {
+    let x = 0;
+    while (x < w) {
+      const buildingW = 60 + Math.random() * 80;
+      const buildingH = 80 + Math.random() * 100;
+      
+      // Industrial structure
+      g.fillRect(x, h - buildingH, buildingW, buildingH);
+      
+      // Crane or antenna
+      if (Math.random() > 0.7) {
+        const craneH = 40 + Math.random() * 30;
+        g.fillRect(x + buildingW - 10, h - buildingH - craneH, 6, craneH);
+        g.fillRect(x + buildingW - 30, h - buildingH - craneH, 30, 4);
+      }
+      
+      // Pipes on side
+      if (Math.random() > 0.5) {
+        g.fillRect(x + buildingW, h - buildingH + 20, 15, 8);
+        g.fillRect(x + buildingW, h - buildingH + 50, 15, 8);
+      }
+      
+      x += buildingW + 30 + Math.random() * 50;
+    }
   }
   
   /**
-   * Electric sparks that occasionally flash
+   * Subtle floating particles (dust/sparks)
    */
-  private createElectricSparks(): void {
+  private createSubtleParticles(): void {
     const { width, height } = this.scene.cameras.main;
     
-    const sparkPoints = [
-      { x: width * 0.2, y: height * 0.3 },
-      { x: width * 0.75, y: height * 0.5 },
-      { x: width * 0.4, y: 60 },
-    ];
-    
-    sparkPoints.forEach((point, i) => {
-      this.scene.time.addEvent({
-        delay: 3000 + i * 1500,
-        callback: () => this.createSpark(point.x, point.y),
-        loop: true
+    // Create sparse floating particles
+    for (let i = 0; i < 15; i++) {
+      const particle = this.scene.add.graphics();
+      particle.setDepth(-1);
+      
+      const size = 1 + Math.random() * 2;
+      const alpha = 0.1 + Math.random() * 0.2;
+      
+      particle.fillStyle(COLORS.NEON_CYAN, alpha);
+      particle.fillCircle(0, 0, size);
+      
+      particle.setPosition(
+        Math.random() * width,
+        Math.random() * height
+      );
+      
+      // Slow drift animation
+      this.scene.tweens.add({
+        targets: particle,
+        y: particle.y - 50 - Math.random() * 100,
+        x: particle.x + (Math.random() - 0.5) * 60,
+        alpha: 0,
+        duration: 4000 + Math.random() * 4000,
+        repeat: -1,
+        onRepeat: () => {
+          particle.setPosition(Math.random() * width, height + 20);
+          particle.setAlpha(alpha);
+        }
       });
-    });
-  }
-  
-  private createSpark(x: number, y: number): void {
-    const spark = this.scene.add.graphics();
-    spark.setPosition(x, y);
-    spark.setDepth(10);
-    
-    // Draw lightning bolt
-    spark.lineStyle(3, COLORS.ELECTRIC_BLUE, 0.8);
-    const points = [
-      { x: 0, y: 0 },
-      { x: 5, y: 8 },
-      { x: -3, y: 12 },
-      { x: 8, y: 22 },
-    ];
-    
-    spark.beginPath();
-    spark.moveTo(points[0].x, points[0].y);
-    points.slice(1).forEach(p => spark.lineTo(p.x, p.y));
-    spark.strokePath();
-    
-    // Glow
-    spark.lineStyle(6, COLORS.ELECTRIC_BLUE, 0.3);
-    spark.beginPath();
-    spark.moveTo(points[0].x, points[0].y);
-    points.slice(1).forEach(p => spark.lineTo(p.x, p.y));
-    spark.strokePath();
-    
-    // Fade out
-    this.scene.tweens.add({
-      targets: spark,
-      alpha: 0,
-      duration: 200,
-      onComplete: () => spark.destroy()
-    });
+      
+      this.particles.push(particle);
+    }
   }
   
   /**
-   * CRT-style scanlines overlay
+   * Subtle ambient glow at bottom (factory glow)
    */
-  private createScanlines(): void {
+  private createAmbientGlow(): void {
     const { width, height } = this.scene.cameras.main;
     
-    const scanlines = this.scene.add.graphics();
-    scanlines.setDepth(50);
-    scanlines.fillStyle(0x000000, 0.02);
+    const glow = this.scene.add.graphics();
+    glow.setDepth(-4);
     
-    for (let y = 0; y < height; y += 3) {
-      scanlines.fillRect(0, y, width, 1);
+    // Soft orange/cyan glow at the bottom
+    const gradient = glow.createGeometryMask();
+    
+    // Create a subtle gradient glow
+    for (let i = 0; i < 5; i++) {
+      const y = height - 60 + i * 15;
+      const alpha = 0.03 - i * 0.005;
+      glow.fillStyle(COLORS.NEON_CYAN, alpha);
+      glow.fillRect(0, y, width, 15);
     }
     
-    this.elements.push(scanlines);
+    // Subtle pulsing
+    this.scene.tweens.add({
+      targets: glow,
+      alpha: 0.5,
+      duration: 3000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
   }
   
   /**
-   * Cleanup all elements
+   * Update parallax layers (call from scene update)
+   */
+  update(scrollSpeed: number, delta: number): void {
+    this.layers.forEach(layer => {
+      const speed = layer.getData('parallaxSpeed') || 0.5;
+      layer.tilePositionX += scrollSpeed * speed * (delta / 1000);
+    });
+  }
+  
+  /**
+   * Cleanup
    */
   destroy(): void {
-    this.elements.forEach(el => el.destroy());
-    this.elements = [];
+    this.layers.forEach(l => l.destroy());
+    this.particles.forEach(p => p.destroy());
+    this.layers = [];
+    this.particles = [];
   }
 }
