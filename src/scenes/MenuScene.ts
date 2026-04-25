@@ -174,15 +174,19 @@ export class MenuScene extends Phaser.Scene {
     
     // Secondary buttons - stack vertically on mobile
     const secondaryY = buttonY + (isMobile ? 80 : 70);
-    const secondaryBtnWidth = isMobile ? Math.min(width * 0.42, 160) : 120;
-    const secondaryBtnHeight = isMobile ? 50 : 40;
-    const secondarySpacing = isMobile ? Math.min(width * 0.25, 90) : 100;
+    const secondaryBtnWidth = isMobile ? Math.min(width * 0.3, 110) : 90;
+    const secondaryBtnHeight = isMobile ? 45 : 38;
+    const secondarySpacing = isMobile ? Math.min(width * 0.22, 85) : 80;
     
-    this.createSecondaryButton(width / 2 - secondarySpacing, secondaryY, '⚡ UPGRADES', secondaryBtnWidth, secondaryBtnHeight, () => {
+    this.createSecondaryButton(width / 2 - secondarySpacing * 1.1, secondaryY, '⚡ UPGRADES', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.scene.start('UpgradeScene');
     });
     
-    this.createSecondaryButton(width / 2 + secondarySpacing, secondaryY, '🏆 STATS', secondaryBtnWidth, secondaryBtnHeight, () => {
+    this.createSecondaryButton(width / 2, secondaryY, '📜 STORY', secondaryBtnWidth, secondaryBtnHeight, () => {
+      this.scene.start('StoryScene');
+    });
+    
+    this.createSecondaryButton(width / 2 + secondarySpacing * 1.1, secondaryY, '🏆 STATS', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.showStatsModal();
     });
     

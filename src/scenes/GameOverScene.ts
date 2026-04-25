@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, UPGRADES } from '../config/gameConfig';
 import { progression } from '../managers/ProgressionManager';
+import { getDeathMessage, getHighScoreMessage } from '../data/story';
 
 // Elegant modern fonts
 const TITLE_FONT = '"Space Grotesk", "Segoe UI", sans-serif';
@@ -43,13 +44,27 @@ export class GameOverScene extends Phaser.Scene {
     const titleText = this.runData.isNewBest ? '🎉 NEW BEST! 🎉' : 'SYSTEM FAILURE';
     const titleColor = this.runData.isNewBest ? '#FFD700' : '#FF0080';
     
-    const title = this.add.text(width / 2, 100, titleText, {
-      fontSize: '36px',
+    const title = this.add.text(width / 2, 80, titleText, {
+      fontSize: '32px',
       color: titleColor,
       fontFamily: TITLE_FONT,
       fontStyle: 'bold'
     }).setOrigin(0.5);
     title.setShadow(0, 0, titleColor, 15, false, true);
+    
+    // Story message based on performance
+    const storyMessage = this.runData.isNewBest 
+      ? getHighScoreMessage()
+      : getDeathMessage(this.runData.time);
+    
+    this.add.text(width / 2, 125, `"${storyMessage}"`, {
+      fontSize: '12px',
+      color: '#888',
+      fontFamily: BODY_FONT,
+      fontStyle: 'italic',
+      wordWrap: { width: 350 },
+      align: 'center'
+    }).setOrigin(0.5);
     
     // Stats panel
     const panelY = 180;

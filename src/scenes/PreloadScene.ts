@@ -65,8 +65,16 @@ export class PreloadScene extends Phaser.Scene {
     // Create generated textures
     this.createTextures();
     
-    // Go to menu
-    this.scene.start('MenuScene');
+    // Check if story has been seen
+    const storySeen = localStorage.getItem('aran_story_seen');
+    
+    if (storySeen) {
+      // Returning player - go straight to menu
+      this.scene.start('MenuScene');
+    } else {
+      // New player - show story first
+      this.scene.start('StoryScene');
+    }
   }
 
   private createTextures(): void {

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { PreloadScene } from './scenes/PreloadScene';
+import { StoryScene } from './scenes/StoryScene';
 import { MenuScene } from './scenes/MenuScene';
 import { RunnerScene } from './scenes/RunnerScene';
 import { GameOverScene } from './scenes/GameOverScene';
@@ -128,6 +129,7 @@ async function initGame() {
     scene: [
       BootScene,
       PreloadScene,
+      StoryScene,
       MenuScene,
       RunnerScene,
       GameOverScene,

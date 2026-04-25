@@ -5,6 +5,7 @@ import { progression } from '../managers/ProgressionManager';
 import { EffectsManager } from '../managers/EffectsManager';
 import { soundManager } from '../utils/SoundManager';
 import { BackgroundAnimations } from '../utils/BackgroundAnimations';
+import { PHASE_STORIES } from '../data/story';
 
 // Elegant modern fonts
 const TITLE_FONT = '"Space Grotesk", "Segoe UI", sans-serif';
@@ -63,6 +64,10 @@ export class RunnerScene extends Phaser.Scene {
   private comboDecayMult: number = 1;
   private pointsMult: number = 1;
   private isNearObstacle: boolean = false;
+  
+  // Story/phase tracking
+  private currentPhaseName: string = '';
+  private shownPhaseStory: boolean = false;
 
   constructor() {
     super({ key: 'RunnerScene' });
@@ -623,13 +628,81 @@ export class RunnerScene extends Phaser.Scene {
     const secs = Math.floor(this.runTime % 60);
     this.timerText.setText(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
     
-    // Phase
-    this.phaseText.setText(this.obstacleGenerator.getCurrentPhaseName());
+    // Phase - check for phase change and show story
+    const newPhaseName = this.obstacleGenerator.getCurrentPhaseName();
+    if (newPhaseName !== this.currentPhaseName) {
+      this.currentPhaseName = newPhaseName;
+      this.showPhaseStory(newPhaseName);
+    }
+    this.phaseText.setText(newPhaseName);
     
     // Gears
     const gearsText = this.children.getByName('gearsText') as Phaser.GameObjects.Text;
     if (gearsText) {
       gearsText.setText(this.gears.toString());
     }
+  }
+  
+  /**
+   * Show story text when entering a new phase
+   */
+  private showPhaseStory(phaseName: string): void {
+    const story = PHASE_STORIES[phaseName];
+    if (!story) return;
+    
+    const { width, height } = this.cameras.main;
+    
+    // Create story overlay
+    const storyContainer = this.add.container(width / 2, height / 2);
+    storyContainer.setDepth(200);
+    
+    // Background panel
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 0.7);
+    bg.fillRoundedRect(-180, -50, 360, 100, 8);
+    storyContainer.add(bg);
+    
+    // Story title
+    const title = this.add.text(0, -30, story.title, {
+      fontSize: '18px',
+      color: '#00FFFF',
+      fontFamily: TITLE_FONT,
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    storyContainer.add(title);
+    
+    // Story text
+    const text = this.add.text(0, 10, story.text, {
+      fontSize: '11px',
+      color: '#cccccc',
+      fontFamily: BODY_FONT,
+      wordWrap: { width: 320 },
+      align: 'center'
+    }).setOrigin(0.5);
+    storyContainer.add(text);
+    
+    // Animate in
+    storyContainer.setAlpha(0);
+    storyContainer.setScale(0.8);
+    
+    this.tweens.add({
+      targets: storyContainer,
+      alpha: 1,
+      scale: 1,
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
+    
+    // Fade out after delay
+    this.time.delayedCall(2500, () => {
+      this.tweens.add({
+        targets: storyContainer,
+        alpha: 0,
+        y: storyContainer.y - 30,
+        duration: 500,
+        ease: 'Power2',
+        onComplete: () => storyContainer.destroy()
+      });
+    });
   }
 }
