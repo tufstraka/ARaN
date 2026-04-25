@@ -205,18 +205,29 @@ export class Web3UI {
   // === WALLET MODAL (Connected) ===
   
   showWalletModal(): void {
-    const modal = this.createModal(380, 480);
+    const modal = this.createModal(400, 520);
+    
+    // Title
+    const title = this.scene.add.text(0, -230, '⛓️ BLOCKCHAIN', {
+      fontSize: '20px',
+      color: '#00ffff',
+      fontFamily: TITLE_FONT,
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    modal.container.add(title);
     
     // Header with address
     const addressBg = this.scene.add.graphics();
-    addressBg.fillStyle(0x1a1a2e, 1);
-    addressBg.fillRoundedRect(-160, -210, 320, 60, 8);
+    addressBg.fillStyle(0x1a2a1a, 0.9);
+    addressBg.fillRoundedRect(-170, -195, 340, 55, 8);
+    addressBg.lineStyle(1, 0x00ff00, 0.4);
+    addressBg.strokeRoundedRect(-170, -195, 340, 55, 8);
     modal.container.add(addressBg);
     
-    const walletIcon = this.scene.add.text(-140, -180, '🔗', { fontSize: '24px' }).setOrigin(0, 0.5);
+    const walletIcon = this.scene.add.text(-150, -168, '🔗', { fontSize: '24px' }).setOrigin(0, 0.5);
     modal.container.add(walletIcon);
     
-    const address = this.scene.add.text(-100, -190, web3Manager.getShortAddress(), {
+    const address = this.scene.add.text(-110, -175, web3Manager.getShortAddress(), {
       fontSize: '16px',
       color: '#00ffff',
       fontFamily: BODY_FONT,
@@ -224,7 +235,7 @@ export class Web3UI {
     }).setOrigin(0, 0.5);
     modal.container.add(address);
     
-    const networkLabel = this.scene.add.text(-100, -165, '● Sepolia Testnet', {
+    const networkLabel = this.scene.add.text(-110, -152, '● Connected to Sepolia', {
       fontSize: '11px',
       color: '#00ff00',
       fontFamily: BODY_FONT
@@ -232,9 +243,15 @@ export class Web3UI {
     modal.container.add(networkLabel);
     
     // Copy address button
-    const copyBtn = this.scene.add.text(140, -180, '📋', { fontSize: '18px' })
+    const copyBtn = this.scene.add.text(150, -168, '📋 Copy', { 
+      fontSize: '12px',
+      color: '#888888',
+      fontFamily: BODY_FONT
+    })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
+    copyBtn.on('pointerover', () => copyBtn.setColor('#ffffff'));
+    copyBtn.on('pointerout', () => copyBtn.setColor('#888888'));
     copyBtn.on('pointerdown', () => {
       navigator.clipboard.writeText(web3Manager.getAddress() || '');
       this.showToast('Address copied!', 'info');
@@ -242,12 +259,20 @@ export class Web3UI {
     modal.container.add(copyBtn);
     
     // Stats section
-    this.addStatsSection(modal.container, -130);
+    this.addStatsSection(modal.container, -125);
     
-    // Actions section
-    const actionsY = 20;
+    // Actions label
+    const actionsLabel = this.scene.add.text(0, -5, '⚡ ACTIONS', {
+      fontSize: '11px',
+      color: '#888888',
+      fontFamily: BODY_FONT
+    }).setOrigin(0.5);
+    modal.container.add(actionsLabel);
     
-    const submitBtn = this.createButton(0, actionsY, 280, 44, '📤 Submit High Score', 0x00aaff, async () => {
+    // Actions section - bigger, more visible buttons
+    const actionsY = 35;
+    
+    const submitBtn = this.createButton(0, actionsY, 320, 50, '📤  SUBMIT HIGH SCORE', 0x00aaff, async () => {
       const stats = progression.stats;
       if (stats.bestScore === 0) {
         this.showToast('Play a game first!', 'warning');
@@ -257,20 +282,20 @@ export class Web3UI {
     });
     modal.container.add(submitBtn);
     
-    const leaderboardBtn = this.createButton(0, actionsY + 55, 280, 44, '🏆 View Leaderboard', 0x9945ff, () => {
+    const leaderboardBtn = this.createButton(0, actionsY + 60, 320, 50, '🏆  VIEW LEADERBOARD', 0x9945ff, () => {
       this.closeModal();
       this.showLeaderboardModal();
     });
     modal.container.add(leaderboardBtn);
     
-    const achievementsBtn = this.createButton(0, actionsY + 110, 280, 44, '🎖️ My Achievements', 0xff6b4a, () => {
+    const achievementsBtn = this.createButton(0, actionsY + 120, 320, 50, '🎖️  MY ACHIEVEMENTS', 0xff6b4a, () => {
       this.closeModal();
       this.showAchievementsModal();
     });
     modal.container.add(achievementsBtn);
     
     // Disconnect button
-    const disconnectBtn = this.scene.add.text(0, 200, '🔌 Disconnect', {
+    const disconnectBtn = this.scene.add.text(0, 220, '🔌 Disconnect Wallet', {
       fontSize: '12px',
       color: '#ff6666',
       fontFamily: BODY_FONT
@@ -287,7 +312,7 @@ export class Web3UI {
     });
     modal.container.add(disconnectBtn);
     
-    this.addCloseButton(modal, 160, -200);
+    this.addCloseButton(modal, 175, -220);
   }
   
   private async addStatsSection(container: Phaser.GameObjects.Container, y: number): Promise<void> {
@@ -585,15 +610,22 @@ export class Web3UI {
   ): Phaser.GameObjects.Container {
     const container = this.scene.add.container(x, y);
     
+    // More visible button with solid background
     const bg = this.scene.add.graphics();
-    bg.fillStyle(color, 0.2);
-    bg.fillRoundedRect(-width/2, -height/2, width, height, 8);
-    bg.lineStyle(2, color, 0.6);
-    bg.strokeRoundedRect(-width/2, -height/2, width, height, 8);
+    bg.fillStyle(color, 0.35);
+    bg.fillRoundedRect(-width/2, -height/2, width, height, 10);
+    bg.lineStyle(3, color, 0.9);
+    bg.strokeRoundedRect(-width/2, -height/2, width, height, 10);
     container.add(bg);
     
+    // Inner glow effect
+    const innerGlow = this.scene.add.graphics();
+    innerGlow.fillStyle(color, 0.15);
+    innerGlow.fillRoundedRect(-width/2 + 4, -height/2 + 4, width - 8, height - 8, 6);
+    container.add(innerGlow);
+    
     const label = this.scene.add.text(0, 0, text, {
-      fontSize: '13px',
+      fontSize: '14px',
       color: '#ffffff',
       fontFamily: BODY_FONT,
       fontStyle: 'bold'
@@ -606,18 +638,20 @@ export class Web3UI {
     
     hitArea.on('pointerover', () => {
       bg.clear();
-      bg.fillStyle(color, 0.4);
-      bg.fillRoundedRect(-width/2, -height/2, width, height, 8);
-      bg.lineStyle(2, color, 1);
-      bg.strokeRoundedRect(-width/2, -height/2, width, height, 8);
+      bg.fillStyle(color, 0.55);
+      bg.fillRoundedRect(-width/2, -height/2, width, height, 10);
+      bg.lineStyle(3, color, 1);
+      bg.strokeRoundedRect(-width/2, -height/2, width, height, 10);
+      label.setScale(1.05);
     });
     
     hitArea.on('pointerout', () => {
       bg.clear();
-      bg.fillStyle(color, 0.2);
-      bg.fillRoundedRect(-width/2, -height/2, width, height, 8);
-      bg.lineStyle(2, color, 0.6);
-      bg.strokeRoundedRect(-width/2, -height/2, width, height, 8);
+      bg.fillStyle(color, 0.35);
+      bg.fillRoundedRect(-width/2, -height/2, width, height, 10);
+      bg.lineStyle(3, color, 0.9);
+      bg.strokeRoundedRect(-width/2, -height/2, width, height, 10);
+      label.setScale(1);
     });
     
     hitArea.on('pointerdown', onClick);
