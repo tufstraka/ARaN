@@ -193,6 +193,8 @@ export class GameScene extends Phaser.Scene {
       soundManager.playFlip();
       this.particleSystem.emitFlip(this.player.x, this.player.y);
       this.cameras.main.shake(100, 0.01);
+      // Trigger player flip animation
+      this.player.playFlipAnimation();
     }
   }
 
@@ -206,6 +208,8 @@ export class GameScene extends Phaser.Scene {
     this.particleSystem.emitCoinCollect(coinSprite.x, coinSprite.y);
     this.scoreSystem.addCoinScore();
     this.scoreSystem.showScorePopup(coinSprite.x, coinSprite.y);
+    // Trigger player collect animation
+    this.player.playCollectAnimation();
 
     coinSprite.destroy();
   }
@@ -217,6 +221,8 @@ export class GameScene extends Phaser.Scene {
     const powerupSprite = powerup as Phaser.Physics.Arcade.Sprite;
     soundManager.playCoinCollect(); // Reuse sound for now
     this.powerupSystem.collect(powerupSprite, this.player.sprite);
+    // Trigger player collect animation
+    this.player.playCollectAnimation();
   }
 
   private hitHazard(): void {
@@ -225,12 +231,16 @@ export class GameScene extends Phaser.Scene {
       // Shield absorbed it - flash blue instead
       this.cameras.main.flash(200, 0, 100, 255);
       soundManager.playFlip(); // Reuse sound
+      // Play hurt animation but don't die
+      this.player.playHurtAnimation();
       return;
     }
 
     soundManager.playDeath();
     this.particleSystem.emitDeath(this.player.x, this.player.y);
     this.cameras.main.flash(200, 255, 0, 0);
+    // Play hurt animation before restart
+    this.player.playHurtAnimation();
     this.restartLevel();
   }
 

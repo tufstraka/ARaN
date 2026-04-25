@@ -1,8 +1,4 @@
-# Wavedash configuration for ARAN
-# Get your game_id from: https://wavedash.com/developers
+game_id = "j979bvc5sepwvsnvvhd4czdaeh85f2rt"
+upload_dir = "dist"
 
-game_id = "REPLACE_WITH_YOUR_GAME_ID"
-upload_dir = "./dist"
-
-[engine]
-type = "phaser"
+entrypoint = "index.html"

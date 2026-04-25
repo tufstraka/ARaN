@@ -70,123 +70,188 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private createTextures(): void {
-    // Create ROBOT texture - FULL BODY WITH LIFE! (48x48 for more detail)
     const pipGraphics = this.make.graphics({ x: 0, y: 0 });
-    const cx = 24, cy = 24; // Center
+    const cx = 32, cy = 32; // Center
     
-    // Outer glow
-    pipGraphics.fillStyle(0x00FFFF, 0.2);
+    pipGraphics.fillStyle(0x00FFFF, 0.05);
+    pipGraphics.fillCircle(cx, cy, 34);
+    pipGraphics.fillStyle(0x00FFFF, 0.08);
+    pipGraphics.fillCircle(cx, cy, 30);
+    pipGraphics.fillStyle(0x00FFFF, 0.12);
     pipGraphics.fillCircle(cx, cy, 26);
     
-    // === LEGS ===
-    pipGraphics.fillStyle(0x4a5a6a);
-    // Left leg
-    pipGraphics.fillRect(cx - 10, cy + 12, 6, 12);
-    pipGraphics.fillRect(cx - 12, cy + 22, 8, 4);
-    // Right leg (slightly forward)
-    pipGraphics.fillRect(cx + 4, cy + 10, 6, 14);
-    pipGraphics.fillRect(cx + 2, cy + 22, 8, 4);
-    // Leg highlights
-    pipGraphics.fillStyle(0x6a7a8a);
-    pipGraphics.fillRect(cx - 9, cy + 13, 2, 10);
-    pipGraphics.fillRect(cx + 5, cy + 11, 2, 12);
+    pipGraphics.fillStyle(0x2a3a4a);
+    pipGraphics.fillRoundedRect(cx - 14, cy + 14, 9, 16, 2);
+    pipGraphics.fillStyle(0x3d5a73);
+    pipGraphics.fillRoundedRect(cx - 13, cy + 14, 8, 15, 2);
+    pipGraphics.fillStyle(0x5a7a9a, 0.6);
+    pipGraphics.fillRoundedRect(cx - 12, cy + 15, 3, 12, 1);
+    pipGraphics.fillStyle(0x4a6a8a);
+    pipGraphics.fillRoundedRect(cx - 16, cy + 28, 12, 5, 2);
+    pipGraphics.fillStyle(0x00FFFF, 0.4);
+    pipGraphics.fillRect(cx - 14, cy + 30, 8, 2);
     
-    // === ARMS ===
-    pipGraphics.fillStyle(0x4a5a6a);
-    // Left arm (raised)
-    pipGraphics.fillRect(cx - 18, cy - 8, 5, 14);
-    // Left hand
-    pipGraphics.fillStyle(0x66D9FF);
-    pipGraphics.fillCircle(cx - 16, cy - 12, 4);
-    // Right arm (down)
-    pipGraphics.fillStyle(0x4a5a6a);
-    pipGraphics.fillRect(cx + 13, cy - 2, 5, 12);
-    pipGraphics.fillStyle(0x66D9FF);
-    pipGraphics.fillCircle(cx + 15, cy + 12, 4);
+    pipGraphics.fillStyle(0x2a3a4a);
+    pipGraphics.fillRoundedRect(cx + 5, cy + 12, 9, 18, 2);
+    pipGraphics.fillStyle(0x3d5a73);
+    pipGraphics.fillRoundedRect(cx + 6, cy + 12, 8, 17, 2);
+    pipGraphics.fillStyle(0x5a7a9a, 0.6);
+    pipGraphics.fillRoundedRect(cx + 7, cy + 13, 3, 14, 1);
+    pipGraphics.fillStyle(0x4a6a8a);
+    pipGraphics.fillRoundedRect(cx + 4, cy + 28, 12, 5, 2);
+    pipGraphics.fillStyle(0x00FFFF, 0.4);
+    pipGraphics.fillRect(cx + 6, cy + 30, 8, 2);
     
-    // === BODY ===
-    // Body shadow
-    pipGraphics.fillStyle(0x000000, 0.2);
-    pipGraphics.fillRoundedRect(cx - 12, cy - 10, 24, 24, 4);
-    // Main body
-    pipGraphics.fillStyle(0x66D9FF);
-    pipGraphics.fillRoundedRect(cx - 13, cy - 12, 26, 26, 5);
-    // Body highlight
-    pipGraphics.fillStyle(0x99EEFF, 0.5);
-    pipGraphics.fillRoundedRect(cx - 10, cy - 10, 20, 6, 3);
-    // Chest core
-    pipGraphics.fillStyle(0x00FFFF);
-    pipGraphics.fillCircle(cx, cy + 4, 5);
-    pipGraphics.fillStyle(0xFFFFFF, 0.7);
+    pipGraphics.fillStyle(0x2a3a4a);
+    pipGraphics.fillRoundedRect(cx - 24, cy - 10, 7, 18, 3);
+    pipGraphics.fillStyle(0x3d5a73);
+    pipGraphics.fillRoundedRect(cx - 23, cy - 10, 6, 17, 3);
+    pipGraphics.fillStyle(0x00FFFF, 0.5);
+    pipGraphics.fillRect(cx - 21, cy - 6, 2, 10);
+    pipGraphics.fillStyle(0x00FFFF, 0.3);
+    pipGraphics.fillCircle(cx - 20, cy - 14, 7);
+    pipGraphics.fillStyle(0x66EEFF);
+    pipGraphics.fillCircle(cx - 20, cy - 14, 5);
+    pipGraphics.fillStyle(0xFFFFFF, 0.8);
+    pipGraphics.fillCircle(cx - 21, cy - 15, 2);
+    
+    pipGraphics.fillStyle(0x2a3a4a);
+    pipGraphics.fillRoundedRect(cx + 17, cy - 4, 7, 16, 3);
+    pipGraphics.fillStyle(0x3d5a73);
+    pipGraphics.fillRoundedRect(cx + 18, cy - 4, 6, 15, 3);
+    pipGraphics.fillStyle(0x00FFFF, 0.5);
+    pipGraphics.fillRect(cx + 20, cy, 2, 8);
+    pipGraphics.fillStyle(0x00FFFF, 0.3);
+    pipGraphics.fillCircle(cx + 21, cy + 14, 6);
+    pipGraphics.fillStyle(0x66EEFF);
+    pipGraphics.fillCircle(cx + 21, cy + 14, 4);
+    pipGraphics.fillStyle(0xFFFFFF, 0.8);
+    pipGraphics.fillCircle(cx + 20, cy + 13, 2);
+    
+    pipGraphics.fillStyle(0x000000, 0.25);
+    pipGraphics.fillRoundedRect(cx - 15, cy - 12, 30, 30, 8);
+    pipGraphics.fillStyle(0x2a4a6a);
+    pipGraphics.fillRoundedRect(cx - 16, cy - 14, 32, 32, 10);
+    pipGraphics.fillStyle(0x4a8ab0);
+    pipGraphics.fillRoundedRect(cx - 14, cy - 12, 28, 28, 8);
+    pipGraphics.fillStyle(0x7ac0e0, 0.6);
+    pipGraphics.fillRoundedRect(cx - 11, cy - 10, 22, 10, 5);
+    pipGraphics.fillStyle(0x00FFFF, 0.3);
+    pipGraphics.fillRoundedRect(cx - 14, cy - 12, 28, 3, 2);
+    
+    pipGraphics.fillStyle(0x00FFFF, 0.2);
+    pipGraphics.fillCircle(cx, cy + 4, 10);
+    pipGraphics.fillStyle(0x00FFFF, 0.4);
+    pipGraphics.fillCircle(cx, cy + 4, 8);
+    pipGraphics.fillStyle(0x00DDFF);
+    pipGraphics.fillCircle(cx, cy + 4, 6);
+    pipGraphics.fillStyle(0x66FFFF);
+    pipGraphics.fillCircle(cx, cy + 4, 4);
+    pipGraphics.fillStyle(0xFFFFFF, 0.9);
     pipGraphics.fillCircle(cx - 1, cy + 2, 2);
     
-    // === HEAD ===
-    // Neck
-    pipGraphics.fillStyle(0x3a4a5a);
-    pipGraphics.fillRect(cx - 4, cy - 16, 8, 5);
-    // Head shadow
-    pipGraphics.fillStyle(0x000000, 0.15);
-    pipGraphics.fillRoundedRect(cx - 11, cy - 32, 22, 18, 4);
-    // Main head
-    pipGraphics.fillStyle(0x77DDFF);
-    pipGraphics.fillRoundedRect(cx - 12, cy - 34, 24, 20, 5);
-    // Head highlight
-    pipGraphics.fillStyle(0xAAEEFF, 0.4);
-    pipGraphics.fillRoundedRect(cx - 9, cy - 32, 18, 5, 2);
+    pipGraphics.fillStyle(0x00FFFF, 0.4);
+    pipGraphics.fillRect(cx - 10, cy - 4, 2, 8);
+    pipGraphics.fillRect(cx + 8, cy - 4, 2, 8);
     
-    // Antenna
-    pipGraphics.fillStyle(0x888888);
-    pipGraphics.fillRect(cx - 2, cy - 40, 4, 7);
-    // Antenna light
-    pipGraphics.fillStyle(0x00FF00);
-    pipGraphics.fillCircle(cx, cy - 42, 4);
-    pipGraphics.fillStyle(0xAAFFAA);
-    pipGraphics.fillCircle(cx - 1, cy - 43, 2);
+    pipGraphics.fillStyle(0x2a3a4a);
+    pipGraphics.fillRoundedRect(cx - 6, cy - 20, 12, 8, 2);
+    pipGraphics.fillStyle(0x00FFFF, 0.3);
+    pipGraphics.fillRect(cx - 2, cy - 18, 4, 6);
     
-    // Visor
+    pipGraphics.fillStyle(0x000000, 0.2);
+    pipGraphics.fillRoundedRect(cx - 14, cy - 42, 28, 24, 8);
+    pipGraphics.fillStyle(0x3a5a7a);
+    pipGraphics.fillRoundedRect(cx - 15, cy - 44, 30, 26, 10);
+    pipGraphics.fillStyle(0x5a8aaa);
+    pipGraphics.fillRoundedRect(cx - 13, cy - 42, 26, 22, 8);
+    pipGraphics.fillStyle(0x8ac0e0, 0.5);
+    pipGraphics.fillRoundedRect(cx - 10, cy - 40, 20, 6, 4);
+    
+    pipGraphics.fillStyle(0x4a5a6a);
+    pipGraphics.fillRoundedRect(cx - 3, cy - 50, 6, 8, 2);
+    pipGraphics.fillStyle(0x00FF88, 0.3);
+    pipGraphics.fillCircle(cx, cy - 54, 7);
+    pipGraphics.fillStyle(0x00FF88, 0.5);
+    pipGraphics.fillCircle(cx, cy - 54, 5);
+    pipGraphics.fillStyle(0x00FF88);
+    pipGraphics.fillCircle(cx, cy - 54, 4);
+    pipGraphics.fillStyle(0xAAFFCC);
+    pipGraphics.fillCircle(cx, cy - 54, 3);
+    pipGraphics.fillStyle(0xFFFFFF, 0.9);
+    pipGraphics.fillCircle(cx - 1, cy - 55, 1.5);
+    
     pipGraphics.fillStyle(0x0a1520);
-    pipGraphics.fillRoundedRect(cx - 10, cy - 30, 20, 12, 3);
+    pipGraphics.fillRoundedRect(cx - 12, cy - 38, 24, 14, 5);
+    pipGraphics.fillStyle(0x001830);
+    pipGraphics.fillRoundedRect(cx - 10, cy - 36, 20, 10, 4);
     
-    // Eyes (expressive, looking up-right)
-    pipGraphics.fillStyle(0x00FFFF);
-    pipGraphics.fillCircle(cx - 5, cy - 25, 4);
-    pipGraphics.fillCircle(cx + 5, cy - 24, 5); // Right eye bigger
-    // Pupils
+    pipGraphics.fillStyle(0x00FFFF, 0.3);
+    pipGraphics.fillCircle(cx - 5, cy - 32, 6);
+    pipGraphics.fillStyle(0x00DDFF);
+    pipGraphics.fillCircle(cx - 5, cy - 32, 4);
+    pipGraphics.fillStyle(0x66FFFF);
+    pipGraphics.fillCircle(cx - 5, cy - 32, 3);
     pipGraphics.fillStyle(0xFFFFFF);
-    pipGraphics.fillCircle(cx - 4, cy - 26, 2);
-    pipGraphics.fillCircle(cx + 6, cy - 26, 2);
-    // Sparkles
-    pipGraphics.fillCircle(cx - 5, cy - 27, 1);
-    pipGraphics.fillCircle(cx + 5, cy - 27, 1);
+    pipGraphics.fillCircle(cx - 4, cy - 33, 1.5);
     
-    // Smile
-    pipGraphics.lineStyle(2, 0x334455);
+    pipGraphics.fillStyle(0x00FFFF, 0.3);
+    pipGraphics.fillCircle(cx + 5, cy - 31, 7);
+    pipGraphics.fillStyle(0x00DDFF);
+    pipGraphics.fillCircle(cx + 5, cy - 31, 5);
+    pipGraphics.fillStyle(0x66FFFF);
+    pipGraphics.fillCircle(cx + 5, cy - 31, 4);
+    pipGraphics.fillStyle(0xFFFFFF);
+    pipGraphics.fillCircle(cx + 6, cy - 32, 2);
+    
+    pipGraphics.fillStyle(0xFFFFFF, 0.8);
+    pipGraphics.fillCircle(cx - 6, cy - 34, 1);
+    pipGraphics.fillCircle(cx + 4, cy - 34, 1);
+    
+    pipGraphics.lineStyle(2, 0x00AACC, 0.6);
     pipGraphics.beginPath();
-    pipGraphics.arc(cx, cy - 19, 4, 0.3, Math.PI - 0.3);
+    pipGraphics.arc(cx, cy - 25, 5, 0.4, Math.PI - 0.4);
     pipGraphics.strokePath();
     
-    // Cheek blush
-    pipGraphics.fillStyle(0xFF6688, 0.3);
-    pipGraphics.fillCircle(cx - 9, cy - 21, 3);
-    pipGraphics.fillCircle(cx + 9, cy - 21, 3);
+    pipGraphics.fillStyle(0xFF6699, 0.25);
+    pipGraphics.fillCircle(cx - 10, cy - 28, 3);
+    pipGraphics.fillCircle(cx + 10, cy - 28, 3);
     
-    // Ear pieces
-    pipGraphics.fillStyle(0x4a6080);
-    pipGraphics.fillCircle(cx - 14, cy - 25, 4);
-    pipGraphics.fillCircle(cx + 14, cy - 25, 4);
-    pipGraphics.fillStyle(0xFF0080);
-    pipGraphics.fillCircle(cx - 14, cy - 25, 2);
-    pipGraphics.fillCircle(cx + 14, cy - 25, 2);
+    pipGraphics.fillStyle(0x3a5a7a);
+    pipGraphics.fillCircle(cx - 16, cy - 32, 5);
+    pipGraphics.fillCircle(cx + 16, cy - 32, 5);
+    pipGraphics.fillStyle(0x4a6a8a);
+    pipGraphics.fillCircle(cx - 16, cy - 32, 4);
+    pipGraphics.fillCircle(cx + 16, cy - 32, 4);
+    pipGraphics.fillStyle(0xFF0088, 0.6);
+    pipGraphics.fillCircle(cx - 16, cy - 32, 2);
+    pipGraphics.fillCircle(cx + 16, cy - 32, 2);
+    pipGraphics.fillStyle(0xFF66AA);
+    pipGraphics.fillCircle(cx - 16, cy - 32, 1.5);
+    pipGraphics.fillCircle(cx + 16, cy - 32, 1.5);
     
-    // Body bolts
-    pipGraphics.fillStyle(0xAABBCC);
-    pipGraphics.fillCircle(cx - 10, cy - 6, 2);
-    pipGraphics.fillCircle(cx + 10, cy - 6, 2);
-    pipGraphics.fillCircle(cx - 10, cy + 8, 2);
-    pipGraphics.fillCircle(cx + 10, cy + 8, 2);
+    pipGraphics.fillStyle(0x00FFFF, 0.4);
+    pipGraphics.fillCircle(cx - 11, cy - 6, 3);
+    pipGraphics.fillCircle(cx + 11, cy - 6, 3);
+    pipGraphics.fillCircle(cx - 11, cy + 10, 3);
+    pipGraphics.fillCircle(cx + 11, cy + 10, 3);
+    pipGraphics.fillStyle(0xAADDFF);
+    pipGraphics.fillCircle(cx - 11, cy - 6, 2);
+    pipGraphics.fillCircle(cx + 11, cy - 6, 2);
+    pipGraphics.fillCircle(cx - 11, cy + 10, 2);
+    pipGraphics.fillCircle(cx + 11, cy + 10, 2);
     
-    pipGraphics.generateTexture('pip', 48, 48);
+    pipGraphics.generateTexture('pip', 64, 64);
     pipGraphics.destroy();
+    
+    const pipGlowGraphics = this.make.graphics({ x: 0, y: 0 });
+    for (let i = 32; i > 0; i--) {
+      const alpha = (i / 32) * 0.3;
+      pipGlowGraphics.fillStyle(0x00FFFF, alpha);
+      pipGlowGraphics.fillCircle(32, 32, i);
+    }
+    pipGlowGraphics.generateTexture('pip_glow', 64, 64);
+    pipGlowGraphics.destroy();
 
     // Create METAL PLATFORM texture (industrial/factory style)
     const platformGraphics = this.make.graphics({ x: 0, y: 0 });

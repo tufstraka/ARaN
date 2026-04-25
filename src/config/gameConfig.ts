@@ -11,7 +11,7 @@
 // Geometry Dash (rhythm/timing), Flappy Bird (one-button)
 // ============================================
 
-// === COLOR PALETTE (Cyberpunk Factory) ===
+// === COLOR PALETTE ===
 export const COLORS = {
   // Neon accents
   NEON_CYAN: 0x00FFFF,
