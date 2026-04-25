@@ -3,6 +3,9 @@ import { COLORS, UPGRADES, CONFIG } from '../config/gameConfig';
 import { progression } from '../managers/ProgressionManager';
 import { soundManager } from '../utils/SoundManager';
 
+const TITLE_FONT = '"Space Grotesk", "Segoe UI", sans-serif';
+const BODY_FONT = '"JetBrains Mono", "Consolas", monospace';
+
 export class UpgradeScene extends Phaser.Scene {
   private fromGameOver: boolean = false;
 
@@ -16,66 +19,85 @@ export class UpgradeScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.cameras.main;
+    const isMobile = width < 500;
     const isCompact = height < 580;
+    
+    // Padding
+    const padding = isMobile ? 15 : 30;
+    const contentWidth = width - padding * 2;
     
     // Background
     const bg = this.add.graphics();
-    bg.fillGradientStyle(COLORS.BG_GRADIENT_TOP, COLORS.BG_GRADIENT_TOP, COLORS.BG_GRADIENT_BOTTOM, COLORS.BG_GRADIENT_BOTTOM);
+    bg.fillGradientStyle(0x0a0a15, 0x0a0a15, 0x151525, 0x151525);
     bg.fillRect(0, 0, width, height);
     
     // Title
-    this.add.text(width / 2, isCompact ? 20 : 40, '⚡ UPGRADES ⚡', {
-      fontSize: isCompact ? '24px' : '32px',
+    const titleY = padding + 15;
+    this.add.text(width / 2, titleY, '⚡ UPGRADES', {
+      fontSize: isMobile ? '22px' : '28px',
       color: '#00FFFF',
-      fontFamily: 'monospace',
-      stroke: '#000',
-      strokeThickness: 4
+      fontFamily: TITLE_FONT,
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     
-    // Currency display (prominent)
-    const currencyY = isCompact ? 45 : 70;
+    // Currency display
+    const currencyY = titleY + (isMobile ? 35 : 45);
     const currencyBg = this.add.graphics();
-    currencyBg.fillStyle(0x1a1a2e, 0.8);
-    currencyBg.fillRoundedRect(width / 2 - 70, currencyY, 140, 32, 6);
-    currencyBg.lineStyle(2, 0xFFD700, 0.5);
-    currencyBg.strokeRoundedRect(width / 2 - 70, currencyY, 140, 32, 6);
+    currencyBg.fillStyle(0x1a1a2e, 0.9);
+    currencyBg.fillRoundedRect(width / 2 - 80, currencyY - 18, 160, 36, 8);
+    currencyBg.lineStyle(2, 0xFFD700, 0.6);
+    currencyBg.strokeRoundedRect(width / 2 - 80, currencyY - 18, 160, 36, 8);
     
-    const currencyText = this.add.text(width / 2, currencyY + 16, `⚙️ ${progression.currency}`, {
-      fontSize: isCompact ? '18px' : '24px',
+    const currencyText = this.add.text(width / 2, currencyY, `⚙️ ${progression.currency} GEARS`, {
+      fontSize: '16px',
       color: '#FFD700',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT,
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     
-    // Upgrade cards - calculate compact layout
-    const startY = isCompact ? 85 : 130;
-    const cardHeight = isCompact ? 55 : 75;
-    const cardSpacing = isCompact ? 4 : 8;
-    const totalCardsHeight = UPGRADES.length * (cardHeight + cardSpacing);
-    const buttonsY = Math.min(startY + totalCardsHeight + 10, height - 55);
+    // Calculate card layout with proportional spacing
+    const cardsStartY = currencyY + 40;
+    const bottomButtonsHeight = 70;
+    const availableHeight = height - cardsStartY - bottomButtonsHeight - padding;
     
-    // Create upgrade cards
+    const numCards = UPGRADES.length;
+    const minCardHeight = 60;
+    const maxCardHeight = 85;
+    const cardSpacing = 12;
+    
+    // Calculate card height to fit available space
+    const totalSpacing = (numCards - 1) * cardSpacing;
+    const cardHeight = Math.min(maxCardHeight, Math.max(minCardHeight, (availableHeight - totalSpacing) / numCards));
+    const totalCardsHeight = numCards * cardHeight + totalSpacing;
+    
+    // Center cards vertically in available space
+    const cardsY = cardsStartY + (availableHeight - totalCardsHeight) / 2;
+    
+    // Create upgrade cards with proportional spacing
     UPGRADES.forEach((upgrade, index) => {
       this.createUpgradeCard(
         width / 2,
-        startY + index * (cardHeight + cardSpacing),
+        cardsY + index * (cardHeight + cardSpacing),
         upgrade,
         currencyText,
         cardHeight,
-        isCompact
+        contentWidth,
+        isMobile
       );
     });
     
     // === BOTTOM BUTTONS ===
-    const buttonWidth = isCompact ? 110 : 140;
-    const buttonHeight = isCompact ? 36 : 45;
-    const buttonGap = isCompact ? 15 : 20;
+    const buttonsY = height - padding - 25;
+    const buttonWidth = Math.min(140, (contentWidth - 20) / 2);
+    const buttonHeight = 45;
+    const buttonGap = 20;
     
     // PLAY button (primary)
     this.createButton(
-      width / 2 - buttonWidth / 2 - buttonGap / 2, 
+      width / 2 - buttonGap / 2 - buttonWidth / 2, 
       buttonsY, 
       '▶ PLAY', 
-      COLORS.NEON_CYAN, 
+      0x00aaff, 
       buttonWidth,
       buttonHeight,
       () => {
@@ -86,10 +108,10 @@ export class UpgradeScene extends Phaser.Scene {
     
     // MENU button (secondary)
     this.createButton(
-      width / 2 + buttonWidth / 2 + buttonGap / 2, 
+      width / 2 + buttonGap / 2 + buttonWidth / 2, 
       buttonsY, 
       '🏠 MENU', 
-      0x666666, 
+      0x555555, 
       buttonWidth,
       buttonHeight,
       () => {
@@ -97,15 +119,6 @@ export class UpgradeScene extends Phaser.Scene {
         this.scene.start('MenuScene');
       }
     );
-    
-    // If there's room, show tip
-    if (height > buttonsY + 100) {
-      this.add.text(width / 2, buttonsY + 70, 'Gears carry over between runs!', {
-        fontSize: '12px',
-        color: '#555',
-        fontFamily: 'monospace'
-      }).setOrigin(0.5);
-    }
   }
 
   private createUpgradeCard(
@@ -114,11 +127,9 @@ export class UpgradeScene extends Phaser.Scene {
     upgrade: typeof UPGRADES[0],
     currencyText: Phaser.GameObjects.Text,
     cardHeight: number,
-    isCompact: boolean = false
+    cardWidth: number,
+    isMobile: boolean = false
   ): void {
-    const { width } = this.cameras.main;
-    const cardWidth = Math.min(isCompact ? 420 : 480, width - 30);
-    
     const currentLevel = progression.getUpgradeLevel(upgrade.id);
     const isMaxed = currentLevel >= upgrade.maxLevel;
     const costs = CONFIG.UPGRADE_COSTS[upgrade.id as keyof typeof CONFIG.UPGRADE_COSTS] || [100, 200, 300];
@@ -127,76 +138,97 @@ export class UpgradeScene extends Phaser.Scene {
     
     // Card background
     const card = this.add.graphics();
-    const bgColor = isMaxed ? 0x1a3a1a : 0x1a1a2e;
-    card.fillStyle(bgColor, 0.9);
-    card.fillRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 6);
+    const bgColor = isMaxed ? 0x1a2a1a : 0x12121f;
+    card.fillStyle(bgColor, 0.95);
+    card.fillRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 10);
     
-    const borderColor = isMaxed ? 0x39FF14 : (canAfford ? COLORS.NEON_CYAN : 0x333333);
-    card.lineStyle(2, borderColor, 0.6);
-    card.strokeRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 6);
+    const borderColor = isMaxed ? 0x39FF14 : (canAfford ? 0x00ffff : 0x333344);
+    card.lineStyle(2, borderColor, isMaxed ? 0.8 : 0.5);
+    card.strokeRoundedRect(x - cardWidth / 2, y, cardWidth, cardHeight, 10);
     
-    // Icon
-    const iconSize = isCompact ? '20px' : '28px';
-    this.add.text(x - cardWidth / 2 + 20, y + cardHeight / 2, upgrade.icon, {
-      fontSize: iconSize
+    // Left section: Icon
+    const iconX = x - cardWidth / 2 + 25;
+    this.add.text(iconX, y + cardHeight / 2, upgrade.icon, {
+      fontSize: isMobile ? '22px' : '26px'
     }).setOrigin(0.5);
     
+    // Middle section: Name, description, pips
+    const textX = iconX + 35;
+    const textWidth = cardWidth - 150;
+    
     // Name + Level
-    const levelStr = isMaxed ? ' (MAX)' : ` Lv.${currentLevel}`;
-    const nameSize = isCompact ? '12px' : '15px';
-    this.add.text(x - cardWidth / 2 + 42, y + (isCompact ? 8 : 12), upgrade.name + levelStr, {
-      fontSize: nameSize,
+    const levelStr = isMaxed ? ' MAX' : ` Lv.${currentLevel + 1}`;
+    this.add.text(textX, y + 12, upgrade.name, {
+      fontSize: isMobile ? '13px' : '15px',
       color: isMaxed ? '#39FF14' : '#FFFFFF',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT,
+      fontStyle: 'bold'
     });
     
-    // Description with current effect (hide on compact if needed)
-    const effectValue = upgrade.effect(currentLevel);
-    let descText = upgrade.description.replace('{n}', effectValue.toString());
+    // Level badge
+    const badgeColor = isMaxed ? 0x39FF14 : 0x00ffff;
+    const badge = this.add.graphics();
+    badge.fillStyle(badgeColor, 0.2);
+    const badgeX = textX + (isMobile ? 75 : 95);
+    badge.fillRoundedRect(badgeX, y + 10, 40, 18, 4);
+    this.add.text(badgeX + 20, y + 19, levelStr, {
+      fontSize: '10px',
+      color: isMaxed ? '#39FF14' : '#00ffff',
+      fontFamily: BODY_FONT
+    }).setOrigin(0.5);
     
-    if (!isCompact) {
-      this.add.text(x - cardWidth / 2 + 42, y + 32, descText, {
-        fontSize: '11px',
-        color: '#888',
-        fontFamily: 'monospace'
-      });
-    }
+    // Description
+    const effectValue = upgrade.effect(currentLevel);
+    const descText = upgrade.description.replace('{n}', effectValue.toString());
+    this.add.text(textX, y + 32, descText, {
+      fontSize: '10px',
+      color: '#777',
+      fontFamily: BODY_FONT,
+      wordWrap: { width: textWidth }
+    });
     
     // Level pips
-    const pipsStartX = x - cardWidth / 2 + 42;
-    const pipY = isCompact ? y + 28 : y + 55;
-    const pipSize = isCompact ? 10 : 12;
-    const pipSpacing = isCompact ? 14 : 18;
+    const pipY = y + cardHeight - 15;
+    const pipWidth = 20;
+    const pipHeight = 5;
+    const pipGap = 4;
     for (let i = 0; i < upgrade.maxLevel; i++) {
-      const pipColor = i < currentLevel ? 0x39FF14 : 0x333333;
-      this.add.rectangle(pipsStartX + i * pipSpacing, pipY, pipSize, 6, pipColor).setOrigin(0, 0.5);
+      const pipColor = i < currentLevel ? 0x39FF14 : 0x333344;
+      const pip = this.add.graphics();
+      pip.fillStyle(pipColor, i < currentLevel ? 1 : 0.5);
+      pip.fillRoundedRect(textX + i * (pipWidth + pipGap), pipY, pipWidth, pipHeight, 2);
     }
     
-    // Buy button or MAX badge
+    // Right section: Buy button or MAX badge
+    const btnX = x + cardWidth / 2 - 50;
+    const btnY = y + cardHeight / 2;
+    const btnWidth = 70;
+    const btnHeight = 36;
+    
     if (isMaxed) {
-      this.add.text(x + cardWidth / 2 - 40, y + cardHeight / 2, '✓ MAX', {
-        fontSize: isCompact ? '11px' : '14px',
+      const maxBadge = this.add.graphics();
+      maxBadge.fillStyle(0x39FF14, 0.2);
+      maxBadge.fillRoundedRect(btnX - btnWidth/2, btnY - btnHeight/2, btnWidth, btnHeight, 6);
+      this.add.text(btnX, btnY, '✓ MAX', {
+        fontSize: '13px',
         color: '#39FF14',
-        fontFamily: 'monospace'
+        fontFamily: BODY_FONT,
+        fontStyle: 'bold'
       }).setOrigin(0.5);
     } else {
-      const btnWidth = isCompact ? 55 : 70;
-      const btnHeight = isCompact ? 26 : 32;
-      const btnX = x + cardWidth / 2 - (isCompact ? 40 : 55);
-      const btnY = y + cardHeight / 2;
-      
       const btn = this.add.graphics();
-      const btnColor = canAfford ? COLORS.NEON_CYAN : 0x444444;
+      const btnColor = canAfford ? 0x00ffff : 0x444444;
       
       btn.fillStyle(btnColor, canAfford ? 0.3 : 0.1);
-      btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
-      btn.lineStyle(1, btnColor, canAfford ? 0.8 : 0.3);
-      btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
+      btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 6);
+      btn.lineStyle(2, btnColor, canAfford ? 0.8 : 0.3);
+      btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 6);
       
       const btnText = this.add.text(btnX, btnY, `⚙️${cost}`, {
-        fontSize: '13px',
+        fontSize: '14px',
         color: canAfford ? '#FFFFFF' : '#555',
-        fontFamily: 'monospace'
+        fontFamily: BODY_FONT,
+        fontStyle: 'bold'
       }).setOrigin(0.5);
       
       if (canAfford) {
@@ -214,17 +246,17 @@ export class UpgradeScene extends Phaser.Scene {
           soundManager.playHover();
           btn.clear();
           btn.fillStyle(btnColor, 0.5);
-          btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
+          btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 6);
           btn.lineStyle(2, btnColor, 1);
-          btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
+          btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 6);
         });
         
         hitArea.on('pointerout', () => {
           btn.clear();
           btn.fillStyle(btnColor, 0.3);
-          btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
-          btn.lineStyle(1, btnColor, 0.8);
-          btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 4);
+          btn.fillRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 6);
+          btn.lineStyle(2, btnColor, 0.8);
+          btn.strokeRoundedRect(btnX - btnWidth / 2, btnY - btnHeight / 2, btnWidth, btnHeight, 6);
         });
       }
     }
@@ -240,15 +272,16 @@ export class UpgradeScene extends Phaser.Scene {
     callback: () => void
   ): void {
     const btn = this.add.graphics();
-    btn.fillStyle(color, 0.2);
-    btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+    btn.fillStyle(color, 0.3);
+    btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 10);
     btn.lineStyle(2, color, 0.8);
-    btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+    btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 10);
     
     const label = this.add.text(x, y, text, {
-      fontSize: '16px',
+      fontSize: '15px',
       color: '#FFFFFF',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT,
+      fontStyle: 'bold'
     }).setOrigin(0.5);
     
     const hitArea = this.add.rectangle(x, y, width, height, 0x000000, 0);
@@ -257,18 +290,20 @@ export class UpgradeScene extends Phaser.Scene {
     hitArea.on('pointerover', () => {
       soundManager.playHover();
       btn.clear();
-      btn.fillStyle(color, 0.4);
-      btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
-      btn.lineStyle(2, color, 1);
-      btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+      btn.fillStyle(color, 0.5);
+      btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 10);
+      btn.lineStyle(3, color, 1);
+      btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 10);
+      label.setScale(1.05);
     });
     
     hitArea.on('pointerout', () => {
       btn.clear();
-      btn.fillStyle(color, 0.2);
-      btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+      btn.fillStyle(color, 0.3);
+      btn.fillRoundedRect(x - width / 2, y - height / 2, width, height, 10);
       btn.lineStyle(2, color, 0.8);
-      btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 8);
+      btn.strokeRoundedRect(x - width / 2, y - height / 2, width, height, 10);
+      label.setScale(1);
     });
     
     hitArea.on('pointerdown', callback);
