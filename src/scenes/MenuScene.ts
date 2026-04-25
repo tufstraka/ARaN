@@ -290,54 +290,149 @@ export class MenuScene extends Phaser.Scene {
     const stats = progression.stats;
     
     // Overlay
-    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.8).setOrigin(0);
+    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.85).setOrigin(0);
     overlay.setInteractive();
     
-    // Modal
+    // Modal - larger for more stats
+    const modalHeight = 420;
     const modal = this.add.graphics();
-    modal.fillStyle(0x1a1a2e, 0.95);
-    modal.fillRoundedRect(width / 2 - 180, height / 2 - 180, 360, 360, 16);
-    modal.lineStyle(2, COLORS.NEON_CYAN, 0.5);
-    modal.strokeRoundedRect(width / 2 - 180, height / 2 - 180, 360, 360, 16);
+    modal.fillStyle(0x0a0a15, 0.98);
+    modal.fillRoundedRect(width / 2 - 190, height / 2 - modalHeight/2, 380, modalHeight, 16);
+    modal.lineStyle(2, COLORS.NEON_CYAN, 0.4);
+    modal.strokeRoundedRect(width / 2 - 190, height / 2 - modalHeight/2, 380, modalHeight, 16);
     
     // Title
-    this.add.text(width / 2, height / 2 - 150, '📊 STATISTICS', {
-      fontSize: '24px',
+    this.add.text(width / 2, height / 2 - modalHeight/2 + 30, 'AR-4N STATUS REPORT', {
+      fontSize: '18px',
       color: '#00FFFF',
-      fontFamily: 'monospace'
+      fontFamily: TITLE_FONT,
+      fontStyle: 'bold'
     }).setOrigin(0.5).setName('modal');
     
-    // Stats list
-    const startY = height / 2 - 100;
-    const statsList = [
-      ['Total Runs', stats.totalRuns.toString()],
-      ['Best Score', stats.bestScore.toString()],
-      ['Longest Run', `${Math.floor(stats.longestRun / 60)}:${(stats.longestRun % 60).toFixed(0).padStart(2, '0')}`],
+    // Subtitle
+    this.add.text(width / 2, height / 2 - modalHeight/2 + 52, 'Escape Attempt Data', {
+      fontSize: '10px',
+      color: '#666',
+      fontFamily: BODY_FONT
+    }).setOrigin(0.5).setName('modal');
+    
+    // Calculate derived stats
+    const avgScore = stats.totalRuns > 0 ? Math.floor(stats.totalScore / stats.totalRuns) : 0;
+    const avgTime = stats.totalRuns > 0 ? stats.totalTimePlayed / stats.totalRuns : 0;
+    const totalMinutes = Math.floor((stats.totalTimePlayed || 0) / 60);
+    const deathsPerMin = stats.totalTimePlayed > 60 ? (stats.totalDeaths / (stats.totalTimePlayed / 60)).toFixed(1) : '—';
+    const gearsPerRun = stats.totalRuns > 0 ? (stats.totalGears / stats.totalRuns).toFixed(1) : '0';
+    
+    // Find highest phase reached
+    let highestPhase = 'BOOT SEQUENCE';
+    const phaseOrder = ['BOOT SEQUENCE', 'CALIBRATING...', 'SYSTEMS ONLINE', 'FACTORY FLOOR', 'DANGER ZONE', 'MELTDOWN', 'CRITICAL', 'CHAOS MODE'];
+    if (stats.phasesReached) {
+      for (let i = phaseOrder.length - 1; i >= 0; i--) {
+        if (stats.phasesReached[phaseOrder[i]]) {
+          highestPhase = phaseOrder[i];
+          break;
+        }
+      }
+    }
+    
+    // Stats list - more interesting grouping
+    const startY = height / 2 - modalHeight/2 + 75;
+    
+    // Section: Performance
+    this.add.text(width / 2 - 160, startY, '[ PERFORMANCE ]', {
+      fontSize: '9px',
+      color: '#00FFFF',
+      fontFamily: BODY_FONT
+    }).setName('modal');
+    
+    const perfStats = [
+      ['Best Score', stats.bestScore.toLocaleString()],
+      ['Longest Survival', this.formatTime(stats.longestRun)],
       ['Best Combo', `${stats.bestCombo}x`],
-      ['Total Gears', stats.totalGears.toString()],
-      ['Total Flips', stats.totalFlips.toString()],
-      ['Total Deaths', stats.totalDeaths.toString()],
+      ['Highest Phase', highestPhase],
     ];
     
-    statsList.forEach(([label, value], i) => {
-      this.add.text(width / 2 - 150, startY + i * 35, label, {
-        fontSize: '14px',
+    perfStats.forEach(([label, value], i) => {
+      this.add.text(width / 2 - 150, startY + 18 + i * 26, label, {
+        fontSize: '12px',
         color: '#888',
-        fontFamily: 'monospace'
+        fontFamily: BODY_FONT
       }).setName('modal');
       
-      this.add.text(width / 2 + 150, startY + i * 35, value, {
-        fontSize: '16px',
+      this.add.text(width / 2 + 160, startY + 18 + i * 26, value, {
+        fontSize: '13px',
         color: '#FFF',
-        fontFamily: 'monospace'
+        fontFamily: BODY_FONT,
+        fontStyle: 'bold'
+      }).setOrigin(1, 0).setName('modal');
+    });
+    
+    // Section: Totals
+    const section2Y = startY + 125;
+    this.add.text(width / 2 - 160, section2Y, '[ TOTALS ]', {
+      fontSize: '9px',
+      color: '#FF6B4A',
+      fontFamily: BODY_FONT
+    }).setName('modal');
+    
+    const totalStats = [
+      ['Escape Attempts', stats.totalRuns.toString()],
+      ['Time in Factory', `${totalMinutes} min`],
+      ['Gears Collected', stats.totalGears.toLocaleString()],
+      ['Gravity Flips', stats.totalFlips.toLocaleString()],
+      ['Terminations', stats.totalDeaths.toString()],
+    ];
+    
+    totalStats.forEach(([label, value], i) => {
+      this.add.text(width / 2 - 150, section2Y + 18 + i * 26, label, {
+        fontSize: '12px',
+        color: '#888',
+        fontFamily: BODY_FONT
+      }).setName('modal');
+      
+      this.add.text(width / 2 + 160, section2Y + 18 + i * 26, value, {
+        fontSize: '13px',
+        color: '#FFF',
+        fontFamily: BODY_FONT,
+        fontStyle: 'bold'
+      }).setOrigin(1, 0).setName('modal');
+    });
+    
+    // Section: Averages
+    const section3Y = section2Y + 150;
+    this.add.text(width / 2 - 160, section3Y, '[ AVERAGES ]', {
+      fontSize: '9px',
+      color: '#44FF44',
+      fontFamily: BODY_FONT
+    }).setName('modal');
+    
+    const avgStats = [
+      ['Avg Score/Run', avgScore.toLocaleString()],
+      ['Avg Survival', this.formatTime(avgTime)],
+      ['Deaths/Min', deathsPerMin],
+      ['Gears/Run', gearsPerRun],
+    ];
+    
+    avgStats.forEach(([label, value], i) => {
+      this.add.text(width / 2 - 150, section3Y + 18 + i * 26, label, {
+        fontSize: '12px',
+        color: '#888',
+        fontFamily: BODY_FONT
+      }).setName('modal');
+      
+      this.add.text(width / 2 + 160, section3Y + 18 + i * 26, value, {
+        fontSize: '13px',
+        color: '#FFF',
+        fontFamily: BODY_FONT,
+        fontStyle: 'bold'
       }).setOrigin(1, 0).setName('modal');
     });
     
     // Close button
-    const closeBtn = this.add.text(width / 2, height / 2 + 150, '[ CLOSE ]', {
-      fontSize: '16px',
+    const closeBtn = this.add.text(width / 2, height / 2 + modalHeight/2 - 30, '[ CLOSE ]', {
+      fontSize: '14px',
       color: '#666',
-      fontFamily: 'monospace'
+      fontFamily: BODY_FONT
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setName('modal');
     
     closeBtn.on('pointerover', () => closeBtn.setColor('#FFF'));
@@ -358,6 +453,15 @@ export class MenuScene extends Phaser.Scene {
       overlay.destroy();
       modal.destroy();
     });
+  }
+  
+  private formatTime(seconds: number): string {
+    if (seconds < 60) {
+      return `${seconds.toFixed(1)}s`;
+    }
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
   private createWeb3UI(): void {

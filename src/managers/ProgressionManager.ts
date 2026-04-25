@@ -66,13 +66,20 @@ export class ProgressionManager {
     return false;
   }
   
-  recordRun(score: number, time: number, gears: number, flips: number, maxCombo: number): void {
+  recordRun(score: number, time: number, gears: number, flips: number, maxCombo: number, finalPhase?: string): void {
     const stats = this.data.stats;
     
     stats.totalRuns++;
     stats.totalScore += score;
     stats.totalFlips += flips;
     stats.totalDeaths++;
+    stats.totalTimePlayed = (stats.totalTimePlayed || 0) + time;
+    
+    // Track phase reached
+    if (finalPhase) {
+      if (!stats.phasesReached) stats.phasesReached = {};
+      stats.phasesReached[finalPhase] = (stats.phasesReached[finalPhase] || 0) + 1;
+    }
     
     if (score > stats.bestScore) stats.bestScore = score;
     if (time > stats.longestRun) stats.longestRun = time;

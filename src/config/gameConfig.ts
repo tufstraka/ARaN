@@ -343,6 +343,8 @@ export interface GameStats {
   bestCombo: number;
   longestRun: number; // seconds
   totalDeaths: number;
+  totalTimePlayed: number; // seconds
+  phasesReached: Record<string, number>; // phase name -> times reached
 }
 
 export const ACHIEVEMENTS: Achievement[] = [
@@ -454,6 +456,8 @@ export const DEFAULT_SAVE: SaveData = {
     bestCombo: 0,
     longestRun: 0,
     totalDeaths: 0,
+    totalTimePlayed: 0,
+    phasesReached: {},
   },
   upgrades: {},
   achievements: [],

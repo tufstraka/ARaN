@@ -5,6 +5,7 @@ import { progression } from '../managers/ProgressionManager';
 import { EffectsManager } from '../managers/EffectsManager';
 import { soundManager } from '../utils/SoundManager';
 import { BackgroundAnimations } from '../utils/BackgroundAnimations';
+import { Background3D } from '../utils/Background3D';
 import { PHASE_STORIES, getOverseerTaunt, getRandomLoreFragment } from '../data/story';
 
 // Elegant modern fonts
@@ -50,6 +51,8 @@ export class RunnerScene extends Phaser.Scene {
   
   // Background animations
   private bgAnimations?: BackgroundAnimations;
+  private bg3D?: Background3D;
+  private use3DBackground: boolean = true; // Toggle for 3D background
   
   // Background layers
   private bgLayers: Phaser.GameObjects.TileSprite[] = [];
@@ -179,9 +182,24 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   private createBackground(): void {
-    // Minimal animated machine background with parallax
-    this.bgAnimations = new BackgroundAnimations(this);
-    this.bgAnimations.create();
+    const { width, height } = this.cameras.main;
+    
+    if (this.use3DBackground) {
+      // Initialize 3D background
+      this.bg3D = new Background3D(width, height);
+      const container = document.getElementById('game-container');
+      if (container) {
+        this.bg3D.mount(container);
+      }
+      
+      // Make Phaser canvas transparent to see 3D behind
+      this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
+      this.game.canvas.style.background = 'transparent';
+    } else {
+      // Fallback to 2D parallax background
+      this.bgAnimations = new BackgroundAnimations(this);
+      this.bgAnimations.create();
+    }
   }
 
   private createBoundaries(): void {
@@ -249,10 +267,17 @@ export class RunnerScene extends Phaser.Scene {
     this.bot.setGravityY(CONFIG.GRAVITY);
     this.bot.setMaxVelocity(500, CONFIG.BOT_TERMINAL_VELOCITY);
     
-    // Cyan glow effect
+    // 3D-style shadow beneath robot
+    const shadow = this.add.ellipse(botX, height - 50, 40, 12, 0x000000, 0.3);
+    shadow.setDepth(0);
+    this.bot.setData('shadow', shadow);
+    
+    // Cyan glow effect (enhanced for 3D look)
     const glow = this.add.graphics();
-    glow.fillStyle(COLORS.NEON_CYAN, 0.3);
-    glow.fillCircle(0, 0, 24);
+    glow.fillStyle(COLORS.NEON_CYAN, 0.15);
+    glow.fillCircle(0, 0, 35);
+    glow.fillStyle(COLORS.NEON_CYAN, 0.25);
+    glow.fillCircle(0, 0, 28);
     
     // Update glow position in update()
     this.bot.setData('glow', glow);
@@ -504,8 +529,15 @@ export class RunnerScene extends Phaser.Scene {
       this.runTime,
       this.gears,
       this.totalFlips,
-      this.maxCombo
+      this.maxCombo,
+      this.currentPhaseName
     );
+    
+    // Cleanup 3D background
+    if (this.bg3D) {
+      this.bg3D.unmount();
+      this.bg3D = undefined;
+    }
     
     // Show game over after brief delay
     this.time.delayedCall(500, () => {
@@ -591,6 +623,19 @@ export class RunnerScene extends Phaser.Scene {
       glow.setPosition(this.bot.x, this.bot.y);
     }
     
+    // Update shadow position (3D effect)
+    const shadow = this.bot.getData('shadow') as Phaser.GameObjects.Ellipse;
+    if (shadow) {
+      const { height } = this.cameras.main;
+      // Shadow stays on ground, stretches based on height
+      const groundY = this.isFlipped ? 70 : height - 50;
+      const distFromGround = Math.abs(this.bot.y - groundY);
+      const shadowScale = Math.max(0.3, 1 - distFromGround / 200);
+      shadow.setPosition(this.bot.x, groundY);
+      shadow.setScale(shadowScale, shadowScale * 0.5);
+      shadow.setAlpha(0.3 * shadowScale);
+    }
+    
     // Update shield position
     if (this.shieldVisual) {
       this.shieldVisual.setPosition(this.bot.x, this.bot.y);
@@ -621,8 +666,17 @@ export class RunnerScene extends Phaser.Scene {
       this.lastLoreTime = now;
     }
     
-    // Update background parallax
-    if (this.bgAnimations) {
+    // Update background
+    if (this.bg3D) {
+      this.bg3D.update(this.scrollSpeed, delta);
+      
+      // Update danger level based on phase
+      const phases = ['BOOT SEQUENCE', 'CALIBRATING...', 'SYSTEMS ONLINE', 'FACTORY FLOOR', 'DANGER ZONE', 'MELTDOWN', 'CRITICAL', 'CHAOS MODE'];
+      const phaseIndex = phases.indexOf(this.currentPhaseName);
+      if (phaseIndex > 0) {
+        this.bg3D.setDanger(phaseIndex / phases.length);
+      }
+    } else if (this.bgAnimations) {
       this.bgAnimations.update(this.scrollSpeed, delta);
     }
   }
