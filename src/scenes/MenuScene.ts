@@ -46,27 +46,29 @@ export class MenuScene extends Phaser.Scene {
 
   private createTitle(): void {
     const { width, height } = this.cameras.main;
-    const isMobile = width < 600;
+    const isLandscape = width > height;
+    const isCompact = height < 450;
+    const isMobile = width < 600 || isCompact;
     
     // Robot icon with subtle glow
-    const robotY = isMobile ? 50 : 70;
+    const robotY = isCompact ? 30 : (isMobile ? 50 : 70);
     const robotContainer = this.add.container(width / 2, robotY);
     
     // Subtle glow behind robot
     const glow = this.add.graphics();
     glow.fillStyle(COLORS.NEON_CYAN, 0.1);
-    glow.fillCircle(0, 0, isMobile ? 30 : 40);
+    glow.fillCircle(0, 0, isCompact ? 20 : (isMobile ? 30 : 40));
     robotContainer.add(glow);
     
     const robot = this.add.text(0, 0, '🤖', {
-      fontSize: isMobile ? '48px' : '64px'
+      fontSize: isCompact ? '32px' : (isMobile ? '48px' : '64px')
     }).setOrigin(0.5);
     robotContainer.add(robot);
     
     // Gentle float animation
     this.tweens.add({
       targets: robotContainer,
-      y: robotY - 6,
+      y: robotY - (isCompact ? 3 : 6),
       duration: 2000,
       yoyo: true,
       repeat: -1,
@@ -74,35 +76,36 @@ export class MenuScene extends Phaser.Scene {
     });
     
     // Title - ARAN in elegant font
-    const titleY = isMobile ? 110 : 155;
+    const titleY = isCompact ? 65 : (isMobile ? 110 : 155);
     const title = this.add.text(width / 2, titleY, 'ARAN', {
-      fontSize: isMobile ? '42px' : '64px',
+      fontSize: isCompact ? '32px' : (isMobile ? '42px' : '64px'),
       color: '#00FFFF',
       fontFamily: TITLE_FONT,
       fontStyle: 'bold',
-      letterSpacing: 12
+      letterSpacing: isCompact ? 6 : 12
     }).setOrigin(0.5);
     
     // Subtle glow effect
     title.setShadow(0, 0, '#00FFFF', 15, false, true);
     
     // Subtitle
-    const subY = isMobile ? 155 : 215;
+    const subY = isCompact ? 95 : (isMobile ? 155 : 215);
     this.add.text(width / 2, subY, 'FACTORY ESCAPE', {
-      fontSize: isMobile ? '10px' : '12px',
+      fontSize: isCompact ? '8px' : (isMobile ? '10px' : '12px'),
       color: '#FF0080',
       fontFamily: BODY_FONT,
-      letterSpacing: isMobile ? 4 : 8
+      letterSpacing: isCompact ? 2 : (isMobile ? 4 : 8)
     }).setOrigin(0.5).setAlpha(0.8);
   }
 
   private createStatsDisplay(): void {
     const { width, height } = this.cameras.main;
     const stats = progression.stats;
-    const isMobile = width < 600;
+    const isCompact = height < 450;
+    const isMobile = width < 600 || isCompact;
     
     // Hide stats panel on very small screens
-    if (isMobile && height < 500) return;
+    if (isCompact) return;
     
     const panelY = isMobile ? 190 : 260;
     const panelWidth = isMobile ? Math.min(width - 40, 280) : 300;
@@ -159,12 +162,15 @@ export class MenuScene extends Phaser.Scene {
 
   private createButtons(): void {
     const { width, height } = this.cameras.main;
-    const isMobile = width < 600;
-    const buttonY = isMobile ? Math.min(height * 0.55, 350) : 380;
+    const isCompact = height < 450;
+    const isMobile = width < 600 || isCompact;
     
-    // PLAY button (main) - bigger on mobile
-    const playBtnWidth = isMobile ? Math.min(width * 0.7, 280) : 200;
-    const playBtnHeight = isMobile ? 60 : 50;
+    // Position buttons based on available space
+    const buttonY = isCompact ? 130 : (isMobile ? Math.min(height * 0.55, 350) : 380);
+    
+    // PLAY button (main) - smaller on compact
+    const playBtnWidth = isCompact ? 160 : (isMobile ? Math.min(width * 0.7, 280) : 200);
+    const playBtnHeight = isCompact ? 45 : (isMobile ? 60 : 50);
     
     this.createMainButton(width / 2, buttonY, '▶  PLAY', COLORS.NEON_CYAN, playBtnWidth, playBtnHeight, () => {
       this.cameras.main.fadeOut(300, 0, 0, 0);
@@ -174,43 +180,45 @@ export class MenuScene extends Phaser.Scene {
     });
     
     // Secondary buttons - evenly spaced
-    const secondaryY = buttonY + (isMobile ? 85 : 75);
-    const secondaryBtnWidth = isMobile ? Math.min(width * 0.28, 100) : 95;
-    const secondaryBtnHeight = isMobile ? 42 : 38;
+    const secondaryY = buttonY + (isCompact ? 55 : (isMobile ? 85 : 75));
+    const secondaryBtnWidth = isCompact ? 80 : (isMobile ? Math.min(width * 0.28, 100) : 95);
+    const secondaryBtnHeight = isCompact ? 35 : (isMobile ? 42 : 38);
     
     // Calculate even spacing for 3 buttons
     const totalButtonsWidth = secondaryBtnWidth * 3;
-    const availableSpace = Math.min(width - 40, 380); // Max width for buttons area
+    const availableSpace = Math.min(width - 30, isCompact ? 300 : 380);
     const gapBetween = (availableSpace - totalButtonsWidth) / 2;
     const startX = width / 2 - availableSpace / 2 + secondaryBtnWidth / 2;
     
-    this.createSecondaryButton(startX, secondaryY, '⚡ UPGRADES', secondaryBtnWidth, secondaryBtnHeight, () => {
+    this.createSecondaryButton(startX, secondaryY, isCompact ? '⚡' : '⚡ UPGRADES', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.scene.start('UpgradeScene');
     });
     
-    this.createSecondaryButton(startX + secondaryBtnWidth + gapBetween, secondaryY, '📜 STORY', secondaryBtnWidth, secondaryBtnHeight, () => {
+    this.createSecondaryButton(startX + secondaryBtnWidth + gapBetween, secondaryY, isCompact ? '📜' : '📜 STORY', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.scene.start('StoryScene');
     });
     
-    this.createSecondaryButton(startX + (secondaryBtnWidth + gapBetween) * 2, secondaryY, '🏆 STATS', secondaryBtnWidth, secondaryBtnHeight, () => {
+    this.createSecondaryButton(startX + (secondaryBtnWidth + gapBetween) * 2, secondaryY, isCompact ? '🏆' : '🏆 STATS', secondaryBtnWidth, secondaryBtnHeight, () => {
       this.showStatsModal();
     });
     
-    // How to play - minimal
-    const instructY = secondaryY + (isMobile ? 70 : 60);
+    // How to play - minimal (hide on compact)
+    if (!isCompact) {
+      const instructY = secondaryY + (isMobile ? 70 : 60);
     
-    const instructText = this.add.text(width / 2, instructY, 'TAP or SPACE to flip gravity', {
-      fontSize: '14px',
-      color: '#666',
-      fontFamily: BODY_FONT
-    }).setOrigin(0.5);
-    
-    if (!isMobile || height > 500) {
-      this.add.text(width / 2, instructY + 25, 'Survive as long as you can', {
-        fontSize: '12px',
-        color: '#444',
+      const instructText = this.add.text(width / 2, instructY, 'TAP or SPACE to flip gravity', {
+        fontSize: '14px',
+        color: '#666',
         fontFamily: BODY_FONT
       }).setOrigin(0.5);
+    
+      if (!isMobile || height > 500) {
+        this.add.text(width / 2, instructY + 25, 'Survive as long as you can', {
+          fontSize: '12px',
+          color: '#444',
+          fontFamily: BODY_FONT
+        }).setOrigin(0.5);
+      }
     }
   }
 

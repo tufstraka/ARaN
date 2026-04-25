@@ -19,11 +19,12 @@ export class UpgradeScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.cameras.main;
-    const isMobile = width < 500;
-    const isCompact = height < 580;
+    const isLandscape = width > height;
+    const isCompact = height < 450;
+    const isMobile = width < 500 || isCompact;
     
-    // Padding
-    const padding = isMobile ? 15 : 30;
+    // Padding - tighter on landscape
+    const padding = isCompact ? 10 : (isMobile ? 15 : 30);
     const contentWidth = width - padding * 2;
     
     // Background
@@ -31,39 +32,40 @@ export class UpgradeScene extends Phaser.Scene {
     bg.fillGradientStyle(0x0a0a15, 0x0a0a15, 0x151525, 0x151525);
     bg.fillRect(0, 0, width, height);
     
-    // Title
-    const titleY = padding + 15;
+    // Title - smaller on compact
+    const titleY = padding + (isCompact ? 8 : 15);
     this.add.text(width / 2, titleY, '⚡ UPGRADES', {
-      fontSize: isMobile ? '22px' : '28px',
+      fontSize: isCompact ? '18px' : (isMobile ? '22px' : '28px'),
       color: '#00FFFF',
       fontFamily: TITLE_FONT,
       fontStyle: 'bold'
     }).setOrigin(0.5);
     
-    // Currency display
-    const currencyY = titleY + (isMobile ? 35 : 45);
+    // Currency display - smaller on compact
+    const currencyY = titleY + (isCompact ? 25 : (isMobile ? 35 : 45));
     const currencyBg = this.add.graphics();
+    const currWidth = isCompact ? 130 : 160;
     currencyBg.fillStyle(0x1a1a2e, 0.9);
-    currencyBg.fillRoundedRect(width / 2 - 80, currencyY - 18, 160, 36, 8);
+    currencyBg.fillRoundedRect(width / 2 - currWidth/2, currencyY - 15, currWidth, isCompact ? 28 : 36, 8);
     currencyBg.lineStyle(2, 0xFFD700, 0.6);
-    currencyBg.strokeRoundedRect(width / 2 - 80, currencyY - 18, 160, 36, 8);
+    currencyBg.strokeRoundedRect(width / 2 - currWidth/2, currencyY - 15, currWidth, isCompact ? 28 : 36, 8);
     
     const currencyText = this.add.text(width / 2, currencyY, `⚙️ ${progression.currency} GEARS`, {
-      fontSize: '16px',
+      fontSize: isCompact ? '13px' : '16px',
       color: '#FFD700',
       fontFamily: BODY_FONT,
       fontStyle: 'bold'
     }).setOrigin(0.5);
     
     // Calculate card layout with proportional spacing
-    const cardsStartY = currencyY + 40;
-    const bottomButtonsHeight = 70;
+    const cardsStartY = currencyY + (isCompact ? 25 : 40);
+    const bottomButtonsHeight = isCompact ? 50 : 70;
     const availableHeight = height - cardsStartY - bottomButtonsHeight - padding;
     
     const numCards = UPGRADES.length;
-    const minCardHeight = 60;
-    const maxCardHeight = 85;
-    const cardSpacing = 12;
+    const minCardHeight = isCompact ? 45 : 60;
+    const maxCardHeight = isCompact ? 60 : 85;
+    const cardSpacing = isCompact ? 6 : 12;
     
     // Calculate card height to fit available space
     const totalSpacing = (numCards - 1) * cardSpacing;
@@ -87,10 +89,10 @@ export class UpgradeScene extends Phaser.Scene {
     });
     
     // === BOTTOM BUTTONS ===
-    const buttonsY = height - padding - 25;
-    const buttonWidth = Math.min(140, (contentWidth - 20) / 2);
-    const buttonHeight = 45;
-    const buttonGap = 20;
+    const buttonsY = height - padding - (isCompact ? 18 : 25);
+    const buttonWidth = isCompact ? 100 : Math.min(140, (contentWidth - 20) / 2);
+    const buttonHeight = isCompact ? 35 : 45;
+    const buttonGap = isCompact ? 15 : 20;
     
     // PLAY button (primary)
     this.createButton(

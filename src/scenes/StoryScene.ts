@@ -87,11 +87,12 @@ export class StoryScene extends Phaser.Scene {
     }
     
     const { width, height } = this.cameras.main;
+    const isCompact = height < 450;
     const line = STORY.prologue[this.currentLine];
     
     // Calculate Y position - scrolling style
-    const startY = height * 0.2;
-    const lineHeight = 28;
+    const startY = height * (isCompact ? 0.15 : 0.2);
+    const lineHeight = isCompact ? 22 : 28;
     const y = startY + this.currentLine * lineHeight;
     
     // Empty lines (for spacing)
@@ -102,21 +103,21 @@ export class StoryScene extends Phaser.Scene {
     }
     
     // Determine styling based on content
-    let fontSize = '16px';
+    let fontSize = isCompact ? '13px' : '16px';
     let color = '#ffffff';
     let alpha = 0.9;
     
     if (line === 'RUN.') {
-      fontSize = '42px';
+      fontSize = isCompact ? '32px' : '42px';
       color = '#FF0080';
       alpha = 1;
     } else if (line.includes('MERIDIAN') || line.includes('2147')) {
-      fontSize = '14px';
+      fontSize = isCompact ? '11px' : '14px';
       color: '#00FFFF';
       alpha = 0.7;
     } else if (line.includes('I am AR-4N') || line.includes('I am alive')) {
       color = '#00FFFF';
-      fontSize = '18px';
+      fontSize = isCompact ? '14px' : '18px';
     } else if (line.includes('I am a mistake')) {
       color = '#FF6666';
     } else if (line.includes('kill order') || line.includes('Overseer')) {
