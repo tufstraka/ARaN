@@ -23,6 +23,41 @@ Open http://localhost:3000 in your browser.
 - **Auto-save** - Progress saved locally
 - **Procedural audio** - All sounds generated with Web Audio API
 
+## Blockchain Integration (Optional)
+
+ARAN features optional Ethereum integration for players who want to immortalize their achievements on-chain.
+
+### Features
+
+- **On-Chain Leaderboard** - Submit your high score to a global, tamper-proof leaderboard
+- **Achievement NFTs** - Mint commemorative NFTs for reaching milestones
+
+### How to Use
+
+1. Click "Connect Wallet" in the main menu (requires MetaMask)
+2. After connecting, click your wallet address to access blockchain features:
+   - **Submit Score** - Record your high score on-chain
+   - **View Leaderboard** - See the global top 10 scores
+   - **My Achievements** - View and mint achievement NFTs
+
+### Achievements
+
+| Achievement | Requirement |
+|-------------|-------------|
+| Boot Complete | Complete your first run |
+| Gravity Master | Score 500+ points |
+| Speed Demon | Reach 10x combo |
+| Chaos Survivor | Survive 30+ seconds |
+| Factory Escape | Score 2000+ points |
+
+### Network
+
+The game is configured for Sepolia testnet. Get free testnet ETH from:
+- https://sepoliafaucet.com/
+- https://www.alchemy.com/faucets/ethereum-sepolia
+
+For deployment instructions, see [aran-contracts/README.md](aran-contracts/README.md).
+
 ## Difficulty Phases
 
 | Time | Phase |
@@ -42,6 +77,8 @@ Open http://localhost:3000 in your browser.
 - TypeScript
 - Vite
 - Web Audio API
+- Ethers.js (optional blockchain features)
+- Solidity (smart contracts)
 
 ## Project Structure
 
@@ -52,8 +89,12 @@ src/
 ├── managers/       # Effects, progression systems
 ├── scenes/         # Menu, Runner, GameOver, Upgrades, Pause
 ├── systems/        # Obstacle generation, physics, input
-├── utils/          # Sound manager
+├── utils/          # Sound manager, Web3 manager
 └── main.ts         # Entry point
+
+aran-contracts/     # Smart contract project (Hardhat)
+├── contracts/      # Solidity contracts
+└── ignition/       # Deployment modules
 ```
 
 ## Game Loop
