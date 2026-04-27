@@ -112,12 +112,6 @@ aran-contracts/     # Smart contract project (Hardhat)
 5. **Upgrade** - Spend gears on permanent upgrades
 6. **Repeat** - Get further each time
 
-## Credits
-
-Made by **tufstraka** (Keith K. Kadima)
-
-GitHub: [@tufstraka](https://github.com/tufstraka)
-
 ## License
 
 MIT
