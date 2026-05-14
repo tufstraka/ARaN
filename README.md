@@ -4,6 +4,8 @@ A one-button endless runner built for Gamedev.js Jam 2026 (Theme: MACHINES).
 
 You are ARAN, a sentient robot escaping a malfunctioning factory. Tap or press SPACE to flip gravity, survive the chaos, and beat your high score.
 
+![4th Best Entry in Ethereum Challenge](https://gamedevjs.com/wp-content/uploads/2026/05/jam26-winners-ethereum.png)
+
 ## Getting Started
 
 ```bash
